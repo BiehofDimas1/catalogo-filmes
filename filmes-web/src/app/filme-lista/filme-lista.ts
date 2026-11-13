@@ -1,9 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Filme, FilmeService } from '../filme';
 
 @Component({
   selector: 'app-filme-lista',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './filme-lista.html',
   styleUrl: './filme-lista.css',
 })

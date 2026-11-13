@@ -1,5 +1,7 @@
 <h1>Catálogo de Filmes</h1>
 
+<p><a routerLink="/filmes/novo" class="botao">+ Novo filme</a></p>
+
 @if (mensagem()) {
   <p class="aviso" [class.erro]="erro()">{{ mensagem() }}</p>
 }
@@ -22,6 +24,7 @@
         <td>{{ f.licencasDisponiveis }}</td>
         <td>{{ f.ativo ? 'Ativo' : 'Inativo' }}</td>
         <td>
+          <a [routerLink]="['/filmes', f.id, 'editar']">Editar</a>
           @if (f.ativo) {
             <button (click)="inativar(f)">Inativar</button>
           }
