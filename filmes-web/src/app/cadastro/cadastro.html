@@ -1,0 +1,33 @@
+<h1>Criar conta</h1>
+
+@if (mensagem()) {
+  <div class="aviso">{{ mensagem() }}</div>
+}
+@if (erro()) {
+  <div class="aviso erro">{{ erro() }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="cadastrar()">
+  <label for="nome">Nome</label>
+  <input id="nome" type="text" formControlName="nome" />
+  @if (form.controls.nome.touched && form.controls.nome.invalid) {
+    <small class="erro-campo">Informe seu nome.</small>
+  }
+
+  <label for="email">E-mail</label>
+  <input id="email" type="email" formControlName="email" />
+  @if (form.controls.email.touched && form.controls.email.invalid) {
+    <small class="erro-campo">Informe um e-mail válido.</small>
+  }
+
+  <label for="senha">Senha</label>
+  <input id="senha" type="password" formControlName="senha" />
+  @if (form.controls.senha.touched && form.controls.senha.invalid) {
+    <small class="erro-campo">A senha deve ter pelo menos 6 caracteres.</small>
+  }
+
+  <div class="acoes">
+    <button type="submit">Cadastrar</button>
+    <a routerLink="/login">Já tenho conta</a>
+  </div>
+</form>
