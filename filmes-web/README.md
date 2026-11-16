@@ -1,59 +1,40 @@
-# FilmesWeb
+# filmes-web
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.7.
+Frontend Angular do Catálogo de Filmes. Consome a API `filmes-api` em `http://localhost:8080`; o endereço fica em `src/app/core/api.ts`.
 
-## Development server
+Requisito: **Node.js 22.22.3 ou mais recente** (ou 24.15+), exigência do Angular CLI 22.2.
 
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Rodar em desenvolvimento
 
 ```bash
-ng generate component component-name
+npm install
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Abra `http://localhost:4200`. A API precisa estar rodando (veja o README da raiz).
+
+## Testes
 
 ```bash
-ng generate --help
+npm test -- --watch=false
 ```
 
-## Building
+Os testes usam Vitest e cobrem a sessão e o interceptor JWT, os guards por perfil, as mensagens de erro da API e todas as telas.
 
-To build the project run:
+## Build de produção
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+A saída fica em `dist/filmes-web`.
 
-## Running unit tests
+## Organização
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+| Caminho | Conteúdo |
+|---|---|
+| `src/app/core/` | Endereço da API, mensagens de erro, sessão, interceptor e guards |
+| `src/app/filme.ts`, `src/app/aluguel.ts` | Serviços HTTP e tipos |
+| `src/app/<tela>/` | Uma pasta por tela: catálogo, formulário de filme, login, cadastro, meus aluguéis e aluguéis do ADMIN |
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+As regras de negócio e as convenções do projeto estão no `README.md` e no `agent.md` da raiz.

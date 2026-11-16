@@ -1,14 +1,14 @@
 <h1>{{ id === null ? 'Novo filme' : 'Editar filme' }}</h1>
 
 @if (mensagem()) {
-  <p class="aviso" [class.erro]="erro()">{{ mensagem() }}</p>
+  <p class="aviso" [class.erro]="erro()" role="status">{{ mensagem() }}</p>
 }
 
 <form [formGroup]="form" (ngSubmit)="salvar()">
   <label for="titulo">Título</label>
   <input id="titulo" type="text" formControlName="titulo" />
   @if (form.controls.titulo.touched && form.controls.titulo.invalid) {
-    <small class="campo-erro">O título é obrigatório.</small>
+    <small class="campo-erro">O título é obrigatório e deve ter até 150 caracteres.</small>
   }
 
   <label for="duracao">Duração (minutos)</label>
@@ -24,7 +24,7 @@
   }
 
   <div class="botoes">
-    <button type="submit">Salvar</button>
-    <a routerLink="/">Cancelar</a>
+    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Salvando...' : 'Salvar' }}</button>
+    <a routerLink="/filmes">Cancelar</a>
   </div>
 </form>

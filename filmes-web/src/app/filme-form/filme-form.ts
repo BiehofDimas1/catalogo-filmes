@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Filme, FilmeService } from '../filme';
+import { mensagemDeErro } from '../core/erro-http';
+import { FilmeDados, FilmeService } from '../filme';
 
 @Component({
   selector: 'app-filme-form',
@@ -14,13 +15,15 @@ export class FilmeForm implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
   id: number | null = null;
   mensagem = signal('');
   erro = signal(false);
+  enviando = signal(false);
 
-  form = this.fb.group({
-    titulo: ['', Validators.required],
+  form = this.fb.nonNullable.group({
+    titulo: ['', [Validators.required, Validators.maxLength(150)]],
     duracaoMinutos: [90, [Validators.required, Validators.min(1), Validators.max(600)]],
     licencasDisponiveis: [1, [Validators.required, Validators.min(0)]],
   });
@@ -31,7 +34,7 @@ export class FilmeForm implements OnInit {
       this.id = Number(id);
       this.service.buscar(this.id).subscribe({
         next: (filme) => this.form.patchValue(filme),
-        error: () => this.mostrar('Não foi possível carregar o filme.', true),
+        error: (e) => this.mostrar(mensagemDeErro(e, 'Não foi possível carregar o filme.'), true),
       });
     }
   }
@@ -43,24 +46,23 @@ export class FilmeForm implements OnInit {
       return;
     }
 
-    const dados = this.form.getRawValue() as Filme;
+    const dados: FilmeDados = this.form.getRawValue();
     const chamada =
-      this.id === null
-        ? this.service.cadastrar(dados)
-        : this.service.atualizar(this.id, dados);
+      this.id === null ? this.service.cadastrar(dados) : this.service.atualizar(this.id, dados);
 
+    this.mensagem.set('');
+    this.enviando.set(true);
     chamada.subscribe({
       next: () => {
+        this.enviando.set(false);
         this.mostrar('Filme salvo com sucesso!', false);
-        setTimeout(() => this.router.navigate(['/']), 1200);
+        const espera = setTimeout(() => this.router.navigate(['/filmes']), 1200);
+        this.destroyRef.onDestroy(() => clearTimeout(espera));
       },
-      error: (e) =>
-        this.mostrar(
-          e.status === 400
-            ? 'Dados inválidos: a duração deve ser de 1 a 600 minutos e o título é obrigatório.'
-            : 'Erro ao salvar o filme. O backend está rodando?',
-          true,
-        ),
+      error: (e) => {
+        this.enviando.set(false);
+        this.mostrar(mensagemDeErro(e, 'Erro ao salvar o filme.'), true);
+      },
     });
   }
 

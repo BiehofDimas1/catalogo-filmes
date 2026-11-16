@@ -1,15 +1,56 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Filme } from './filme';
+import { API_URL } from './core/api';
+import { Filme, FilmeService } from './filme';
 
-describe('Filme', () => {
-  let service: Filme;
+describe('FilmeService', () => {
+  let service: FilmeService;
+  let http: HttpTestingController;
+
+  const matriz: Filme = { id: 1, titulo: 'Matriz', duracaoMinutos: 136, licencasDisponiveis: 2, ativo: true };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(Filme);
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    service = TestBed.inject(FilmeService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
+  afterEach(() => http.verify());
+
+  it('lista os filmes com GET /filmes', () => {
+    let quantidade = 0;
+    service.listar().subscribe((filmes) => (quantidade = filmes.length));
+
+    const req = http.expectOne(`${API_URL}/filmes`);
+    expect(req.request.method).toBe('GET');
+    req.flush([matriz]);
+
+    expect(quantidade).toBe(1);
+  });
+
+  it('cadastra com POST enviando só os campos do formulário', () => {
+    service.cadastrar({ titulo: 'Duna', duracaoMinutos: 155, licencasDisponiveis: 3 }).subscribe();
+
+    const req = http.expectOne(`${API_URL}/filmes`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ titulo: 'Duna', duracaoMinutos: 155, licencasDisponiveis: 3 });
+    req.flush({ ...matriz, id: 2, titulo: 'Duna' });
+  });
+
+  it('inativa com DELETE /filmes/{id}', () => {
+    service.inativar(1).subscribe();
+
+    const req = http.expectOne(`${API_URL}/filmes/1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('reativa com PATCH /filmes/{id}/reativar', () => {
+    service.reativar(1).subscribe();
+
+    const req = http.expectOne(`${API_URL}/filmes/1/reativar`);
+    expect(req.request.method).toBe('PATCH');
+    req.flush(matriz);
   });
 });

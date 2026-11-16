@@ -1,37 +1,71 @@
 <h1>Catálogo de Filmes</h1>
 
-<p><a routerLink="/filmes/novo" class="botao">+ Novo filme</a></p>
-
-@if (mensagem()) {
-  <p class="aviso" [class.erro]="erro()">{{ mensagem() }}</p>
+@if (auth.ehAdmin()) {
+  <p><a routerLink="/filmes/novo" class="botao">+ Novo filme</a></p>
 }
 
-<table>
-  <thead>
-    <tr>
-      <th>Título</th>
-      <th>Duração</th>
-      <th>Licenças</th>
-      <th>Status</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (f of filmes(); track f.id) {
+@if (regras(); as r) {
+  <p class="regras">
+    Aluguel por {{ r.valor | currency: 'BRL' }}, válido por {{ r.duracaoHoras }} horas.
+    Cancelamento com reembolso em até {{ r.prazoCancelamentoMinutos }} minutos.
+    Até {{ r.limiteAtivos }} aluguéis ativos por vez.
+  </p>
+}
+
+@if (mensagem()) {
+  <p class="aviso" [class.erro]="erro()" role="status">{{ mensagem() }}</p>
+}
+
+@if (carregando()) {
+  <p>Carregando filmes...</p>
+} @else {
+  <div class="tabela">
+  <table>
+    <thead>
       <tr>
-        <td>{{ f.titulo }}</td>
-        <td>{{ f.duracaoMinutos }} min</td>
-        <td>{{ f.licencasDisponiveis }}</td>
-        <td>{{ f.ativo ? 'Ativo' : 'Inativo' }}</td>
-        <td>
-          <a [routerLink]="['/filmes', f.id, 'editar']">Editar</a>
-          @if (f.ativo) {
-            <button (click)="inativar(f)">Inativar</button>
-          }
-        </td>
+        <th>Título</th>
+        <th>Duração</th>
+        <th>Licenças disponíveis</th>
+        @if (auth.ehAdmin()) {
+          <th>Status</th>
+        }
+        <th>Ações</th>
       </tr>
-    } @empty {
-      <tr><td colspan="5">Nenhum filme cadastrado.</td></tr>
-    }
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      @for (f of filmes(); track f.id) {
+        <tr>
+          <td>{{ f.titulo }}</td>
+          <td>{{ f.duracaoMinutos }} min</td>
+          <td>{{ f.licencasDisponiveis }}</td>
+          @if (auth.ehAdmin()) {
+            <td>{{ f.ativo ? 'Ativo' : 'Inativo' }}</td>
+            <td class="acoes">
+              <a [routerLink]="['/filmes', f.id, 'editar']">Editar</a>
+              @if (f.ativo) {
+                <button type="button" (click)="inativar(f)" [disabled]="emAndamento() === f.id">Inativar</button>
+              } @else {
+                <button type="button" (click)="reativar(f)" [disabled]="emAndamento() === f.id">Reativar</button>
+              }
+            </td>
+          } @else {
+            <td>
+              <button
+                type="button"
+                (click)="alugar(f)"
+                [disabled]="f.licencasDisponiveis === 0 || emAndamento() === f.id"
+              >
+                {{ f.licencasDisponiveis === 0 ? 'Indisponível' : 'Alugar' }}
+              </button>
+            </td>
+          }
+        </tr>
+      } @empty {
+        <tr>
+          <td [attr.colspan]="auth.ehAdmin() ? 5 : 4">Nenhum filme no catálogo.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  </div>
+}
