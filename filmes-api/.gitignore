@@ -1,5 +1,7 @@
 HELP.md
 target/
+### Banco H2 local (arquivo) ###
+data/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
