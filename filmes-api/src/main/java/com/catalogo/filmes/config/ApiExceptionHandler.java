@@ -5,6 +5,7 @@ import com.catalogo.filmes.service.exception.ConflitoException;
 import com.catalogo.filmes.service.exception.CredenciaisInvalidasException;
 import com.catalogo.filmes.service.exception.RecursoNaoEncontradoException;
 import com.catalogo.filmes.service.exception.RegraNegocioException;
+import com.catalogo.filmes.service.exception.VersaoDesatualizadaException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -90,6 +91,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ConflitoException.class)
     public ResponseEntity<ProblemDetail> tratarConflito(ConflitoException ex) {
         return resposta(HttpStatus.CONFLICT, "Registro duplicado", ex.getMessage());
+    }
+
+    @ExceptionHandler(VersaoDesatualizadaException.class)
+    public ResponseEntity<ProblemDetail> tratarVersaoDesatualizada(VersaoDesatualizadaException ex) {
+        return resposta(HttpStatus.CONFLICT, "Conflito de atualização", ex.getMessage());
     }
 
     @ExceptionHandler(RegraNegocioException.class)

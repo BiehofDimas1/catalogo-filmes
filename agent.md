@@ -44,6 +44,15 @@ Estado encontrado em 14/11/2026 no repositório `BiehofDimas1/catalogo-filmes` e
 | Testes do Angular quebrados: título inexistente, interface injetada como serviço, providers ausentes | Specs reescritos e ampliados |
 | URL da API fixa dentro do serviço de filmes | Centralizada em `core/api.ts` |
 
+### Revisão depois do merge (16/11/2026)
+
+O PR #1 levou o trabalho para o `main`. A revisão do `main` contra os requisitos, feita num clone limpo, encontrou dois pontos, corrigidos no branch `fix/versao-edicao-filme`:
+
+| Situação encontrada | Correção |
+|---|---|
+| O formulário de edição gravava as licenças que estavam na tela ao abri-lo; um aluguel, cancelamento ou expiração nesse meio-tempo era desfeito, e o filme ganhava ou perdia uma licença | `PUT /filmes/{id}` exige a `versao` carregada e responde 409 se o filme mudou; o formulário envia a versão e mostra o aviso |
+| Este arquivo ainda dizia que o trabalho estava em `feature/auth-aluguel` | Seção "Integração e entrega" atualizada |
+
 ## Decisões tomadas no grill-me
 
 Entrevista feita com a skill grill-me em 14/11/2026, uma pergunta por vez, antes de implementar:
@@ -74,6 +83,7 @@ Não mude essas decisões sem combinar de novo com a equipe.
 - **Perfis:** `ADMIN` e `CLIENTE`. O perfil nunca vem do cliente. O primeiro `ADMIN` é promovido pelo console do H2 (passo a passo no README).
 - **Acesso:** visitantes só usam cadastro e login. `ADMIN` gerencia filmes, vê todos os aluguéis e valida códigos de acesso. `CLIENTE` vê os filmes ativos, aluga, cancela os próprios aluguéis e vê o próprio histórico.
 - **Filme:** título obrigatório e único sem diferenciar maiúsculas; duração de 1 a 600 minutos; licenças disponíveis maiores ou iguais a zero. `DELETE /filmes/{id}` inativa; não há exclusão física.
+- **Edição de filme:** o `PUT /filmes/{id}` exige a `versao` que o formulário carregou (400 sem ela). Se o filme mudou desde então, inclusive por aluguel, cancelamento ou expiração, a resposta é 409 e nada é gravado, para não desfazer a contagem de licenças.
 - **Aluguel:** só de filme ativo com licença disponível; cobra o pagamento simulado, vale 48 horas e consome uma licença. No máximo 5 aluguéis ativos por usuário e 1 ativo por filme.
 - **Status:** `ATIVO` vira `EXPIRADO` depois de 48 horas, devolvendo a licença, ou `CANCELADO` quando o dono cancela em até 1 hora, com reembolso integral simulado e devolução da licença.
 - **Código de acesso:** UUID único por aluguel, mostrado ao dono enquanto o aluguel está ativo. O ADMIN valida em `GET /alugueis/acesso/{codigo}`, sem consumir o código.
@@ -157,7 +167,7 @@ npm start
 - Erros de negócio usam as exceções de `service/exception` e são traduzidos por `config/ApiExceptionHandler` em ProblemDetail (`title`, `status`, `detail` e, em erros de validação, `erros` por campo). Status usados: 400 validação, 401 sem login ou credenciais inválidas, 403 perfil ou dono errado, 404 não encontrado, 409 duplicidade ou conflito de concorrência, 422 regra de negócio.
 - A autorização é do servidor: regras por rota em `config/SecurityConfig` e verificação de dono nos services.
 - Senhas são gravadas com BCrypt. Não registre senhas, tokens ou segredos em log e não coloque segredos ou credenciais padrão no código.
-- Concorrência: `Filme`, `Aluguel` e `Usuario` têm `@Version`, e conflitos viram 409 com pedido para tentar de novo. A expiração roda a cada minuto e também é aplicada ao filme no momento do aluguel. As respostas sempre mostram o status efetivo.
+- Concorrência: `Filme`, `Aluguel` e `Usuario` têm `@Version`, e conflitos viram 409 com pedido para tentar de novo. A edição de filme compara a `versao` enviada com a atual (`VersaoDesatualizadaException`, 409), porque o `@Version` sozinho não percebe mudanças feitas antes de a requisição chegar; `FilmeResponse` expõe a `versao` para isso. A expiração roda a cada minuto e também é aplicada ao filme no momento do aluguel. As respostas sempre mostram o status efetivo.
 - Pagamento e reembolso passam por `service/pagamento/PagamentoGateway`; a implementação atual é simulada e o cliente nunca escolhe o resultado.
 
 ## Convenções do web
@@ -172,7 +182,7 @@ npm start
 
 - **API** (`filmes-api/src/test`): testes unitários de modelo e serviço (Mockito, com relógio fixo para os prazos), validação dos DTOs, JWT e testes de API com MockMvc. `SegurancaApiTest` cobre os acessos 401/403 e `AluguelFluxoApiTest` cobre o fluxo completo. O perfil `test` usa H2 em memória.
 - **Web** (`*.spec.ts`): Vitest com `HttpTestingController`. Componentes que usam HTTP ou rotas precisam de `provideHttpClient()`, `provideHttpClientTesting()` e `provideRouter([])`. Quando o componente chama a API no `ngOnInit`, use `fixture.detectChanges()`, responda as requisições e só então `await fixture.whenStable()`.
-- **Estado verificado em 16/11/2026:** 70 testes da API e 53 do Angular passando, build de produção e checagem estrita de templates sem erros, e o fluxo completo testado no navegador (cadastro, promoção a ADMIN pelo console do H2, filme, aluguel, validação do código e cancelamento).
+- **Estado verificado em 16/11/2026:** 74 testes da API e 57 do Angular passando, build de produção e checagem estrita de templates sem erros. O fluxo completo no navegador (cadastro, promoção a ADMIN pelo console do H2, filme, aluguel, validação do código e cancelamento) foi testado antes da checagem de versão na edição; esse caso é coberto por `AluguelFluxoApiTest` e pelos testes do formulário.
 
 ## Limitações conhecidas
 
@@ -184,4 +194,4 @@ npm start
 ## Integração e entrega
 
 - Mudou endpoint, payload ou regra? Atualize a API, as telas, os testes dos dois lados, o README e este arquivo na mesma mudança.
-- O trabalho está no branch `feature/auth-aluguel`. Não faça push nem merge em `main` sem combinar com a equipe.
+- O código está no `main` desde o PR #1 (16/11/2026). Para mudar algo, crie um branch a partir do `main` e abra um pull request; não faça push direto no `main` nem merge sem combinar com a equipe.

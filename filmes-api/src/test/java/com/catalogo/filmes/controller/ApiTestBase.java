@@ -49,6 +49,12 @@ abstract class ApiTestBase {
                 + ",\"licencasDisponiveis\":" + licencas + "}";
     }
 
+    /** Corpo da edição: inclui a versão do filme carregada no formulário. */
+    protected static String filmeJson(String titulo, int duracao, int licencas, long versao) {
+        return "{\"titulo\":\"" + titulo + "\",\"duracaoMinutos\":" + duracao
+                + ",\"licencasDisponiveis\":" + licencas + ",\"versao\":" + versao + "}";
+    }
+
     protected static String aluguelJson(long filmeId) {
         return "{\"filmeId\":" + filmeId + "}";
     }
