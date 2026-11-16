@@ -1,0 +1,9 @@
+h1 { margin-bottom: 16px; }
+form { display: flex; flex-direction: column; gap: 6px; max-width: 420px; }
+label { font-weight: bold; margin-top: 8px; }
+input { padding: 8px; font-size: 1rem; }
+.botoes { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
+button { cursor: pointer; padding: 8px 16px; }
+.campo-erro { color: #991b1b; }
+.aviso { padding: 10px; border-radius: 6px; background: #dcfce7; color: #166534; }
+.aviso.erro { background: #fee2e2; color: #991b1b; }

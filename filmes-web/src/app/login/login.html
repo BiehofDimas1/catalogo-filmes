@@ -1,0 +1,27 @@
+<h1>Entrar</h1>
+
+@if (mensagem()) {
+  <div class="aviso" role="status">{{ mensagem() }}</div>
+}
+@if (erro()) {
+  <div class="aviso erro" role="alert">{{ erro() }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="entrar()">
+  <label for="email">E-mail</label>
+  <input id="email" type="email" formControlName="email" autocomplete="username" />
+  @if (form.controls.email.touched && form.controls.email.invalid) {
+    <small class="erro-campo">Informe um e-mail válido.</small>
+  }
+
+  <label for="senha">Senha</label>
+  <input id="senha" type="password" formControlName="senha" autocomplete="current-password" />
+  @if (form.controls.senha.touched && form.controls.senha.invalid) {
+    <small class="erro-campo">A senha deve ter pelo menos 6 caracteres.</small>
+  }
+
+  <div class="acoes">
+    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Entrando...' : 'Entrar' }}</button>
+    <a routerLink="/cadastro">Criar conta</a>
+  </div>
+</form>

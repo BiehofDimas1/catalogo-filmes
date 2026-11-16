@@ -1,0 +1,30 @@
+<h1>{{ id === null ? 'Novo filme' : 'Editar filme' }}</h1>
+
+@if (mensagem()) {
+  <p class="aviso" [class.erro]="erro()" role="status">{{ mensagem() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="salvar()">
+  <label for="titulo">Título</label>
+  <input id="titulo" type="text" formControlName="titulo" />
+  @if (form.controls.titulo.touched && form.controls.titulo.invalid) {
+    <small class="campo-erro">O título é obrigatório e deve ter até 150 caracteres.</small>
+  }
+
+  <label for="duracao">Duração (minutos)</label>
+  <input id="duracao" type="number" formControlName="duracaoMinutos" />
+  @if (form.controls.duracaoMinutos.touched && form.controls.duracaoMinutos.invalid) {
+    <small class="campo-erro">A duração deve ser de 1 a 600 minutos.</small>
+  }
+
+  <label for="licencas">Licenças disponíveis</label>
+  <input id="licencas" type="number" formControlName="licencasDisponiveis" />
+  @if (form.controls.licencasDisponiveis.touched && form.controls.licencasDisponiveis.invalid) {
+    <small class="campo-erro">As licenças não podem ser negativas.</small>
+  }
+
+  <div class="botoes">
+    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Salvando...' : 'Salvar' }}</button>
+    <a routerLink="/filmes">Cancelar</a>
+  </div>
+</form>

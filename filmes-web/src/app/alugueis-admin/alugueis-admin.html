@@ -1,0 +1,67 @@
+<h1>Aluguéis</h1>
+
+<section class="validar">
+  <h2>Validar código de acesso</h2>
+  <p>Confere se o aluguel ainda dá acesso ao filme. A validação não consome o código.</p>
+  <form [formGroup]="form" (ngSubmit)="validar()">
+    <input type="text" formControlName="codigo" placeholder="Cole o código de acesso" aria-label="Código de acesso" />
+    <button type="submit" [disabled]="validando()">{{ validando() ? 'Validando...' : 'Validar' }}</button>
+  </form>
+
+  @if (erroValidacao()) {
+    <p class="aviso erro" role="alert">{{ erroValidacao() }}</p>
+  }
+  @if (validacao(); as v) {
+    <p class="aviso" [class.erro]="!v.valido" role="status">
+      <strong>{{ v.mensagem }}</strong><br />
+      Filme: {{ v.filmeTitulo }} · Cliente: {{ v.usuarioNome }} · Válido até
+      {{ v.dataExpiracao | date: 'dd/MM/yyyy HH:mm' }}
+    </p>
+  }
+</section>
+
+<h2>Todos os aluguéis</h2>
+
+@if (mensagem()) {
+  <p class="aviso erro" role="alert">{{ mensagem() }}</p>
+}
+
+@if (carregando()) {
+  <p>Carregando aluguéis...</p>
+} @else if (alugueis().length === 0) {
+  <p>Nenhum aluguel registrado ainda.</p>
+} @else {
+  <div class="tabela">
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Filme</th>
+        <th>Alugado em</th>
+        <th>Válido até</th>
+        <th>Status</th>
+        <th>Valor</th>
+        <th>Código de acesso</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (a of alugueis(); track a.id) {
+        <tr>
+          <td>{{ a.usuarioNome }}<br /><small>{{ a.usuarioEmail }}</small></td>
+          <td>{{ a.filmeTitulo }}</td>
+          <td>{{ a.dataAluguel | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ a.dataExpiracao | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ rotulos[a.status] }}</td>
+          <td>
+            {{ a.valor | currency: 'BRL' }}
+            @if (a.transacaoReembolso) {
+              <small>(reembolsado)</small>
+            }
+          </td>
+          <td><code>{{ a.codigoAcesso }}</code></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  </div>
+}

@@ -1,0 +1,58 @@
+<h1>Meus aluguéis</h1>
+
+@if (mensagem()) {
+  <p class="aviso" [class.erro]="erro()" role="status">{{ mensagem() }}</p>
+}
+
+@if (carregando()) {
+  <p>Carregando seus aluguéis...</p>
+} @else if (alugueis().length === 0) {
+  <p>Você ainda não alugou nenhum filme. <a routerLink="/filmes">Ver o catálogo</a></p>
+} @else {
+  <div class="tabela">
+  <table>
+    <thead>
+      <tr>
+        <th>Filme</th>
+        <th>Alugado em</th>
+        <th>Válido até</th>
+        <th>Status</th>
+        <th>Valor</th>
+        <th>Código de acesso</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (a of alugueis(); track a.id) {
+        <tr>
+          <td>{{ a.filmeTitulo }}</td>
+          <td>{{ a.dataAluguel | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ a.dataExpiracao | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td><span class="status" [attr.data-status]="a.status">{{ rotulos[a.status] }}</span></td>
+          <td>
+            {{ a.valor | currency: 'BRL' }}
+            @if (a.transacaoReembolso) {
+              <small>(reembolsado)</small>
+            }
+          </td>
+          <td>
+            @if (a.status === 'ATIVO') {
+              <code>{{ a.codigoAcesso }}</code>
+            } @else {
+              —
+            }
+          </td>
+          <td>
+            @if (a.cancelavel) {
+              <button type="button" (click)="cancelar(a)" [disabled]="emAndamento() === a.id">Cancelar</button>
+              <small class="prazo">até {{ a.cancelavelAte | date: 'HH:mm' }}</small>
+            } @else {
+              —
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  </div>
+}
