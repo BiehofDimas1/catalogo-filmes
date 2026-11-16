@@ -5,9 +5,11 @@ import com.catalogo.filmes.dto.FilmeResponse;
 import com.catalogo.filmes.security.UsuarioLogado;
 import com.catalogo.filmes.service.FilmeService;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,8 +38,10 @@ public class FilmeController {
         return service.cadastrar(dados);
     }
 
+    /** A edição exige a versão carregada no formulário; se o filme mudou desde então, a resposta é 409. */
     @PutMapping("/{id}")
-    public FilmeResponse atualizar(@PathVariable("id") Long id, @Valid @RequestBody FilmeRequest dados) {
+    public FilmeResponse atualizar(@PathVariable("id") Long id,
+                                   @Validated({Default.class, FilmeRequest.Edicao.class}) @RequestBody FilmeRequest dados) {
         return service.atualizar(id, dados);
     }
 

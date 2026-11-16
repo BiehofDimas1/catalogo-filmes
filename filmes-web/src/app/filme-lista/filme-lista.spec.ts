@@ -9,7 +9,7 @@ import { Filme } from '../filme';
 import { FilmeLista } from './filme-lista';
 
 function filme(id: number, titulo: string, licencas: number, ativo = true): Filme {
-  return { id, titulo, duracaoMinutos: 120, licencasDisponiveis: licencas, ativo };
+  return { id, titulo, duracaoMinutos: 120, licencasDisponiveis: licencas, ativo, versao: 0 };
 }
 
 function aluguel(): Aluguel {

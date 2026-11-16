@@ -6,7 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/** Dados que o ADMIN envia para cadastrar ou atualizar um filme. */
+/**
+ * Dados que o ADMIN envia para cadastrar ou atualizar um filme.
+ * Na edição, {@code versao} é a versão do filme carregada no formulário e passa a ser obrigatória
+ * (grupo {@link Edicao}); no cadastro ela é ignorada.
+ */
 public record FilmeRequest(
         @NotBlank(message = "O título é obrigatório.")
         @Size(max = 150, message = "O título deve ter no máximo 150 caracteres.")
@@ -19,5 +23,12 @@ public record FilmeRequest(
 
         @NotNull(message = "Informe as licenças disponíveis.")
         @Min(value = 0, message = "As licenças não podem ser negativas.")
-        Integer licencasDisponiveis) {
+        Integer licencasDisponiveis,
+
+        @NotNull(groups = FilmeRequest.Edicao.class, message = "Informe a versão do filme que está sendo editado.")
+        Long versao) {
+
+    /** Validações extras da edição de um filme. */
+    public interface Edicao {
+    }
 }

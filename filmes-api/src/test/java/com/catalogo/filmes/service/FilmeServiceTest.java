@@ -6,6 +6,7 @@ import com.catalogo.filmes.model.Filme;
 import com.catalogo.filmes.repository.FilmeRepository;
 import com.catalogo.filmes.service.exception.ConflitoException;
 import com.catalogo.filmes.service.exception.RecursoNaoEncontradoException;
+import com.catalogo.filmes.service.exception.VersaoDesatualizadaException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -27,6 +28,7 @@ class FilmeServiceTest {
     private Filme criarFilme(Long id, String titulo, boolean ativo) {
         Filme f = new Filme();
         ReflectionTestUtils.setField(f, "id", id);
+        ReflectionTestUtils.setField(f, "versao", 0L);
         f.setTitulo(titulo);
         f.setDuracaoMinutos(120);
         f.setLicencasDisponiveis(3);
@@ -64,7 +66,7 @@ class FilmeServiceTest {
         when(repository.existsByTituloNormalizado("interestelar")).thenReturn(false);
         when(repository.save(any(Filme.class))).thenAnswer(i -> i.getArgument(0));
 
-        FilmeResponse resposta = service.cadastrar(new FilmeRequest("Interestelar", 169, 3));
+        FilmeResponse resposta = service.cadastrar(new FilmeRequest("Interestelar", 169, 3, null));
 
         assertEquals("Interestelar", resposta.titulo());
         assertEquals(169, resposta.duracaoMinutos());
@@ -77,7 +79,7 @@ class FilmeServiceTest {
         when(repository.existsByTituloNormalizado("matriz")).thenReturn(true);
 
         assertThrows(ConflitoException.class,
-                () -> service.cadastrar(new FilmeRequest("  MATRIZ ", 120, 2)));
+                () -> service.cadastrar(new FilmeRequest("  MATRIZ ", 120, 2, null)));
         verify(repository, never()).save(any());
     }
 
@@ -87,7 +89,23 @@ class FilmeServiceTest {
         when(repository.existsByTituloNormalizadoAndIdNot("avatar", 1L)).thenReturn(true);
 
         assertThrows(ConflitoException.class,
-                () -> service.atualizar(1L, new FilmeRequest("Avatar", 160, 1)));
+                () -> service.atualizar(1L, new FilmeRequest("Avatar", 160, 1, 0L)));
+    }
+
+    @Test
+    void atualizarComVersaoDesatualizadaDeveFalharSemMexerNasLicencas() {
+        Filme filme = criarFilme(1L, "Matriz", true);
+        // Um aluguel mudou o filme (versão 1) depois que o ADMIN abriu o formulário na versão 0.
+        ReflectionTestUtils.setField(filme, "versao", 1L);
+        filme.setLicencasDisponiveis(2);
+        when(repository.findById(1L)).thenReturn(Optional.of(filme));
+
+        assertThrows(VersaoDesatualizadaException.class,
+                () -> service.atualizar(1L, new FilmeRequest("Matriz", 150, 3, 0L)));
+
+        assertEquals(2, filme.getLicencasDisponiveis());
+        assertEquals(120, filme.getDuracaoMinutos());
+        verify(repository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -97,7 +115,7 @@ class FilmeServiceTest {
         when(repository.existsByTituloNormalizadoAndIdNot("matriz", 1L)).thenReturn(false);
         when(repository.saveAndFlush(any(Filme.class))).thenAnswer(i -> i.getArgument(0));
 
-        FilmeResponse resposta = service.atualizar(1L, new FilmeRequest("Matriz", 136, 5));
+        FilmeResponse resposta = service.atualizar(1L, new FilmeRequest("Matriz", 136, 5, 0L));
 
         assertEquals(136, resposta.duracaoMinutos());
         assertEquals(5, resposta.licencasDisponiveis());
@@ -117,6 +135,7 @@ class FilmeServiceTest {
     void reativarDeveVoltarOFilmeAoCatalogo() {
         Filme filme = criarFilme(1L, "Matriz", false);
         when(repository.findById(1L)).thenReturn(Optional.of(filme));
+        when(repository.saveAndFlush(any(Filme.class))).thenAnswer(i -> i.getArgument(0));
 
         FilmeResponse resposta = service.reativar(1L);
 

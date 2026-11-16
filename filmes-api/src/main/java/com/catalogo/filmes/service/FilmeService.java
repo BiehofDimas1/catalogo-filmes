@@ -6,11 +6,13 @@ import com.catalogo.filmes.model.Filme;
 import com.catalogo.filmes.repository.FilmeRepository;
 import com.catalogo.filmes.service.exception.ConflitoException;
 import com.catalogo.filmes.service.exception.RecursoNaoEncontradoException;
+import com.catalogo.filmes.service.exception.VersaoDesatualizadaException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,7 @@ public class FilmeService {
     @Transactional
     public FilmeResponse atualizar(Long id, FilmeRequest dados) {
         Filme filme = buscarEntidade(id);
+        garantirVersaoAtual(filme, dados.versao());
         garantirTituloUnico(dados.titulo(), id);
         aplicar(filme, dados);
         return FilmeResponse.de(repository.saveAndFlush(filme));
@@ -62,12 +65,25 @@ public class FilmeService {
     public FilmeResponse reativar(Long id) {
         Filme filme = buscarEntidade(id);
         filme.reativar();
-        return FilmeResponse.de(filme);
+        // saveAndFlush: a resposta já sai com a versão nova.
+        return FilmeResponse.de(repository.saveAndFlush(filme));
     }
 
     private Filme buscarEntidade(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Filme não encontrado."));
+    }
+
+    /**
+     * A edição traz a versão do filme que o ADMIN carregou no formulário. Se um aluguel, cancelamento ou
+     * expiração mudou o filme depois disso, gravar o formulário desfaria a contagem de licenças.
+     * Uma mudança simultânea, entre esta checagem e a gravação, é barrada pelo {@code @Version} e também vira 409.
+     */
+    private static void garantirVersaoAtual(Filme filme, Long versaoCarregada) {
+        if (!Objects.equals(versaoCarregada, filme.getVersao())) {
+            throw new VersaoDesatualizadaException("Este filme mudou depois que você abriu o formulário "
+                    + "(por exemplo, por um aluguel). Recarregue a página para ver os dados atuais e salve de novo.");
+        }
     }
 
     private void garantirTituloUnico(String titulo, Long idAtual) {

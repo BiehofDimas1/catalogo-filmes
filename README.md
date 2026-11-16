@@ -2,7 +2,7 @@
 
 Sistema web de catálogo de filmes de uma plataforma de streaming, com aluguel de filmes por 48 horas e pagamento simulado.
 
-Projeto acadêmico de Programação IV (atividade "Projetos baseados no Mini Spring", **tema 2: Catálogo de filmes**, rota base `/filmes`, máximo de 600 minutos). Segue a organização do projeto de referência [Ingresso](https://github.com/ferreiralisson/ingresso): camadas controller / service / repository, JPA, JWT e perfis de acesso. O fluxo de pedidos do Ingresso virou o **aluguel de filmes**.
+Projeto acadêmico de Programação IV (atividade "Projetos baseados no Mini Spring", **Grupo 5, tema 2: Catálogo de filmes**, rota base `/filmes`, máximo de 600 minutos). Segue a organização do projeto de referência [Ingresso](https://github.com/ferreiralisson/ingresso): camadas controller / service / repository, JPA, JWT e perfis de acesso. O fluxo de pedidos do Ingresso virou o **aluguel de filmes**.
 
 ## Tecnologias
 
@@ -56,6 +56,7 @@ Uma rotina da API expira os aluguéis vencidos a cada minuto. Antes de checar a 
 - Só é possível alugar filme **ativo** e com **licenças disponíveis**.
 - O aluguel só pode ser cancelado pelo próprio cliente, em até **1 hora**, com reembolso simulado.
 - Não há exclusão física de filmes: `DELETE /filmes/{id}` **inativa** o filme e o ADMIN pode reativá-lo. Aluguéis ativos de um filme inativado continuam valendo até expirar; só novos aluguéis ficam bloqueados.
+- A edição de um filme envia a `versao` que o formulário carregou. Se o filme mudou nesse meio-tempo, por exemplo porque um cliente alugou, a API recusa a edição (409) para não desfazer a contagem de licenças. Basta recarregar o formulário e salvar de novo.
 
 Os valores (preço, validade, prazo de cancelamento e limite) ficam em `filmes-api/src/main/resources/application.properties`, no grupo `aluguel.*`.
 
@@ -83,7 +84,7 @@ Não geramos a **imagem** do QR Code porque o acesso ao streaming acontece na pr
 | GET | `/filmes` | logado | ADMIN vê todos; CLIENTE vê só os ativos |
 | GET | `/filmes/{id}` | logado | Busca um filme |
 | POST | `/filmes` | ADMIN | Cadastra um filme |
-| PUT | `/filmes/{id}` | ADMIN | Atualiza um filme |
+| PUT | `/filmes/{id}` | ADMIN | Atualiza um filme; o corpo inclui a `versao` recebida no GET |
 | DELETE | `/filmes/{id}` | ADMIN | Inativa um filme |
 | PATCH | `/filmes/{id}/reativar` | ADMIN | Reativa um filme |
 | GET | `/alugueis/regras` | logado | Preço, validade e limites atuais |
@@ -101,7 +102,7 @@ Envie o token no cabeçalho `Authorization: Bearer <token>`. Os erros seguem o f
 | 401 | Sem login, token inválido ou credenciais erradas |
 | 403 | O perfil não permite a operação, ou o aluguel é de outro cliente |
 | 404 | Registro não encontrado |
-| 409 | Duplicidade (título, e-mail, aluguel ativo do mesmo filme) ou alteração simultânea |
+| 409 | Duplicidade (título, e-mail, aluguel ativo do mesmo filme), alteração simultânea ou edição de filme com versão desatualizada |
 | 422 | Regra do aluguel (limite, sem licença, filme inativo, prazo de cancelamento, pagamento recusado) |
 
 ## Como executar
@@ -161,7 +162,7 @@ cd filmes-api
 mvnw test
 ```
 
-Os testes da API cobrem as validações do filme (incluindo o limite de 600 minutos), a duplicidade de título e de e-mail, todas as regras do aluguel (limite de 5, um ativo por filme, disponibilidade, prazo de cancelamento, pagamento recusado, expiração), o código de acesso, o JWT e os cenários de acesso não autorizado (401 sem login ou com token inválido, 403 para perfil errado e para aluguel de outro cliente).
+Os testes da API cobrem as validações do filme (incluindo o limite de 600 minutos), a duplicidade de título e de e-mail, todas as regras do aluguel (limite de 5, um ativo por filme, disponibilidade, prazo de cancelamento, pagamento recusado, expiração), a edição de filme com versão desatualizada, o código de acesso, o JWT e os cenários de acesso não autorizado (401 sem login ou com token inválido, 403 para perfil errado e para aluguel de outro cliente).
 
 ```
 cd filmes-web

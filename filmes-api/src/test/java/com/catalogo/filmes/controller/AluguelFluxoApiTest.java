@@ -97,6 +97,52 @@ class AluguelFluxoApiTest extends ApiTestBase {
     }
 
     @Test
+    void edicaoComVersaoDesatualizadaRecebe409ENaoDesfazOAluguel() throws Exception {
+        String admin = novoAdmin();
+        String ana = novoCliente("Ana");
+        String titulo = unico("Tropa");
+        long filmeId = criarFilme(admin, titulo, 1);
+
+        // O ADMIN abre a edição: o formulário guarda a versão carregada.
+        String aberto = corpo(mvc.perform(get("/filmes/" + filmeId).header(AUTORIZACAO, bearer(admin)))
+                .andExpect(status().isOk()));
+        long versaoAberta = ((Number) JsonPath.read(aberto, "$.versao")).longValue();
+
+        // Enquanto o formulário está aberto, Ana aluga a única licença.
+        alugar(ana, filmeId, 201);
+
+        // Salvar o formulário antigo devolveria a licença alugada: a API recusa e nada muda.
+        mvc.perform(put("/filmes/" + filmeId).header(AUTORIZACAO, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(filmeJson(titulo, 130, 1, versaoAberta)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.title").value("Conflito de atualização"));
+        String depois = corpo(mvc.perform(get("/filmes/" + filmeId).header(AUTORIZACAO, bearer(admin)))
+                .andExpect(jsonPath("$.licencasDisponiveis").value(0))
+                .andExpect(jsonPath("$.duracaoMinutos").value(120)));
+
+        // Recarregando o formulário, a edição passa e a versão avança.
+        long versaoAtual = ((Number) JsonPath.read(depois, "$.versao")).longValue();
+        mvc.perform(put("/filmes/" + filmeId).header(AUTORIZACAO, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(filmeJson(titulo, 130, 0, versaoAtual)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duracaoMinutos").value(130))
+                .andExpect(jsonPath("$.licencasDisponiveis").value(0))
+                .andExpect(jsonPath("$.versao").value(versaoAtual + 1));
+    }
+
+    @Test
+    void edicaoSemVersaoRecebe400ComMensagemDoCampo() throws Exception {
+        String admin = novoAdmin();
+        String titulo = unico("SemVersao");
+        long filmeId = criarFilme(admin, titulo, 1);
+
+        mvc.perform(put("/filmes/" + filmeId).header(AUTORIZACAO, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(filmeJson(titulo, 100, 1)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros.versao").exists());
+    }
+
+    @Test
     void duracaoAcimaDe600MinutosRecebe400ComMensagemDoCampo() throws Exception {
         String admin = novoAdmin();
 
