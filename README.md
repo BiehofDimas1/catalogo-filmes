@@ -62,7 +62,7 @@ Os valores (preço, validade, prazo de cancelamento e limite) ficam em `filmes-a
 
 ## Pagamento e reembolso simulados
 
-Como no projeto de referência, o pagamento passa por uma interface (`PagamentoGateway`) com implementação simulada. Nenhum dinheiro é movimentado. Por padrão o pagamento é aprovado; para demonstrar a recusa, inicie a API com `PAGAMENTO_SIMULADO=RECUSADO`. O cliente nunca escolhe o resultado do pagamento.
+Como no projeto de referência, o pagamento passa por interfaces (`GatewayDeCobranca` e `GatewayDeReembolso`) com implementação simulada. Nenhum dinheiro é movimentado. Por padrão o pagamento é aprovado; para demonstrar a recusa, inicie a API com `PAGAMENTO_SIMULADO=RECUSADO`. O cliente nunca escolhe o resultado do pagamento.
 
 ## QR Code e validação de entrada
 
@@ -73,6 +73,18 @@ No Ingresso, cada ingresso tem um QR Code que é validado na portaria. Aqui o eq
 - validar **não consome** o código, porque um filme alugado pode ser assistido mais de uma vez dentro das 48 horas, ao contrário de um ingresso, que só entra uma vez.
 
 Não geramos a **imagem** do QR Code porque o acesso ao streaming acontece na própria conta logada, sem leitura por câmera em uma portaria. O código em texto cumpre o mesmo papel de comprovar e validar o direito de acesso.
+
+## Organização do código (SOLID)
+
+O código segue os cinco princípios SOLID e não usa comentários: os nomes de classes, métodos e testes explicam a intenção. A formatação é padronizada para facilitar a leitura: Prettier no Angular; no Java, imports explícitos, linhas curtas e métodos divididos em passos com nome.
+
+| Princípio | Onde aparece |
+|---|---|
+| Responsabilidade única | Um service por caso de uso. Aluguel: `AluguelService` (alugar), `CancelamentoAluguelService`, `ConsultaAluguelService`, `ValidacaoAcessoService` e `ExpiracaoAluguelService`. Filme: `ConsultaFilmeService`, `CadastroFilmeService` e `AtivacaoFilmeService`. Usuário: `CadastroUsuarioService`, `LoginService` e `ConsultaUsuarioService`. Cada regra é uma classe. `SecurityConfig`, `CorsConfig` e `SenhaConfig` são separados, e o JSON das respostas 401/403 é montado pelo Jackson. No Angular, `AuthService` faz login e cadastro, `SessaoService` guarda o estado, `RepositorioSessao` grava a sessão, e o catálogo tem uma tela por papel: `CatalogoCliente` e `GestaoFilmes`. As mensagens de todas as telas passam pelo componente `Aviso` (`app-aviso`), que só as exibe; o estado fica na classe `Mensagem`. |
+| Aberto/fechado | Uma regra nova de aluguel, cancelamento ou filme é uma classe nova que implementa `ValidadorAluguel`, `ValidadorCancelamento` ou `ValidadorFilme`. Um erro novo é uma classe que estende `ErroDaAplicacao` com o próprio status e título. Em nenhum dos casos os services ou o `ApiExceptionHandler` mudam. |
+| Substituição de Liskov | Qualquer implementação das interfaces funciona no lugar da outra: os testes usam pagamento falso, repositório de sessão em memória, regras escritas como lambda e um erro novo criado no próprio teste, sem mudar os services nem o handler. |
+| Segregação de interfaces | Quem gera token (`GeradorDeToken`, no login) é separado de quem verifica (`VerificadorDeToken`, no filtro). Cobrança (`GatewayDeCobranca`) é separada de reembolso (`GatewayDeReembolso`). Cada classe depende só do que usa. |
+| Inversão de dependência | Os services dependem de interfaces: repositórios Spring Data, gateways de pagamento, token, `Clock` e `PasswordEncoder`. O filtro de segurança depende de `UserDetailsService`. No Angular, `SessaoService` depende da abstração `RepositorioSessao`. |
 
 ## Endpoints
 

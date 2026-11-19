@@ -53,6 +53,14 @@ O PR #1 levou o trabalho para o `main`. A revisão do `main` contra os requisito
 | O formulário de edição gravava as licenças que estavam na tela ao abri-lo; um aluguel, cancelamento ou expiração nesse meio-tempo era desfeito, e o filme ganhava ou perdia uma licença | `PUT /filmes/{id}` exige a `versao` carregada e responde 409 se o filme mudou; o formulário envia a versão e mostra o aviso |
 | Este arquivo ainda dizia que o trabalho estava em `feature/auth-aluguel` | Seção "Integração e entrega" atualizada |
 
+### Refatoração SOLID e remoção de comentários (17/11/2026)
+
+A pedido da equipe, os comentários saíram do código (Java, TypeScript, CSS e `application.properties`) e o código passou a seguir SOLID. O `AluguelService` único virou um service por caso de uso, as regras do aluguel e do cancelamento viraram classes próprias, e token, pagamento e sessão do Angular passaram a ser usados por interfaces. Numa segunda rodada, no mesmo dia, o `FilmeService` e o `AuthService` também foram divididos por caso de uso, as regras do filme viraram validadores, as exceções passaram a herdar de `ErroDaAplicacao` (um único método no `ApiExceptionHandler`), a resposta 401/403 passou a usar o Jackson, e a tela de catálogo foi dividida por papel. O comportamento da API não mudou: os testes de ponta a ponta continuaram os mesmos e passando. O mapa de onde cada princípio aparece está no README, na seção "Organização do código (SOLID)".
+
+### Revisão de legibilidade (19/11/2026)
+
+Antes da apresentação, o código passou por uma revisão de legibilidade, sem mudar o comportamento. Na API: imports explícitos, `@Slf4j` no lugar dos loggers manuais, linhas de até 110 caracteres e métodos longos divididos em passos com nome (por exemplo, `AluguelService.alugar`, `CancelamentoAluguelService.cancelar` e `SecurityFilter`). No Angular: Prettier em todos os arquivos, nomes descritivos no lugar de letras soltas (`f`, `a`, `e`) e um componente único para as mensagens das telas, `app-aviso`, com o estado na classe `Mensagem` (`shared/aviso/`).
+
 ## Decisões tomadas no grill-me
 
 Entrevista feita com a skill grill-me em 14/11/2026, uma pergunta por vez, antes de implementar:
@@ -96,15 +104,19 @@ Os valores das regras ficam em `filmes-api/src/main/resources/application.proper
 
 | Pacote | Conteúdo |
 |---|---|
-| `config` | `SecurityConfig` (rotas por perfil, CORS, BCrypt), `ApiExceptionHandler`, propriedades `aluguel.*`, `jwt.*` e `pagamento.simulado.*`, relógio da aplicação |
+| `config` | `SecurityConfig` (rotas por perfil), `CorsConfig`, `SenhaConfig` (BCrypt), `ApiExceptionHandler` (um método para todo `ErroDaAplicacao`), propriedades `aluguel.*`, `jwt.*` e `pagamento.simulado.*`, relógio da aplicação |
 | `controller` | `AuthController` (`/auth`), `FilmeController` (`/filmes`), `AluguelController` (`/alugueis`) |
 | `dto` | Records de entrada e saída, com Bean Validation e mensagens em português |
 | `model` | Entidades JPA `Filme`, `Usuario` e `Aluguel`; enums `Perfil` e `StatusAluguel` |
 | `repository` | Repositórios Spring Data JPA |
-| `security` | `TokenService` (JWT), `SecurityFilter`, `UsuarioLogado`, `UsuarioDetailsService` e as respostas 401/403 |
-| `service` | Regras: `FilmeService`, `AuthService`, `AluguelService` e a rotina `AluguelExpiracaoJob` |
-| `service.exception` | Exceções de negócio, traduzidas em status HTTP |
-| `service.pagamento` | `PagamentoGateway` e a implementação simulada |
+| `security` | `GeradorDeToken` e `VerificadorDeToken`, implementadas por `JwtTokenService`; `SecurityFilter`, `UsuarioLogado`, `UsuarioDetailsService` e `RespostaErroSeguranca` (401/403 em JSON pelo Jackson) |
+| `service.filme` | `ConsultaFilmeService`, `CadastroFilmeService` (cadastrar e editar) e `AtivacaoFilmeService` (inativar e reativar) |
+| `service.filme.validacao` | Regras do filme (`ValidadorFilme`: versão atual na edição, título único) |
+| `service.usuario` | `CadastroUsuarioService`, `LoginService` e `ConsultaUsuarioService` |
+| `service.aluguel` | Um service por caso de uso: `AluguelService` (alugar), `CancelamentoAluguelService`, `ConsultaAluguelService`, `ValidacaoAcessoService` e `ExpiracaoAluguelService`, com a rotina `AluguelExpiracaoJob` |
+| `service.aluguel.validacao` | Regras do aluguel (`ValidadorAluguel`: filme ativo, aluguel duplicado, limite de ativos, licença disponível) e do cancelamento (`ValidadorCancelamento`: dono, aluguel ainda ativo, prazo) |
+| `service.exception` | `ErroDaAplicacao` e as exceções que herdam dela, cada uma com o próprio status e título |
+| `service.pagamento` | `GatewayDeCobranca` e `GatewayDeReembolso`, implementadas pelo `PagamentoSimuladoGateway` |
 
 Relacionamentos: `Usuario` 1 — N `Aluguel` N — 1 `Filme`.
 
@@ -116,9 +128,11 @@ Autenticação: `POST /auth/login` devolve o JWT (emissor `filmes-api`, assunto 
 |---|---|
 | `core/api.ts` | Endereço da API |
 | `core/erro-http.ts` | Monta a mensagem de erro a partir do ProblemDetail |
-| `core/auth/` | `AuthService` (sessão no `sessionStorage`), interceptor JWT e guards por perfil |
+| `core/auth/` | `AuthService` (login e cadastro), `SessaoService` (estado da sessão), `RepositorioSessao` (onde a sessão fica gravada; o padrão usa o `sessionStorage`), interceptor JWT e guards por perfil |
+| `shared/aviso/` | Componente `app-aviso` e classe `Mensagem`: o texto e o tipo (sucesso ou erro) da mensagem de cada tela |
 | `filme.ts`, `aluguel.ts` | Serviços HTTP e tipos de cada domínio |
-| `filme-lista/`, `filme-form/` | Catálogo (aluguel para o CLIENTE, gestão para o ADMIN) e formulário de filme |
+| `filme-lista/` | Escolhe a tela do catálogo pelo perfil: `catalogo-cliente/` (aluguel, CLIENTE) ou `gestao-filmes/` (inativar e reativar, ADMIN) |
+| `filme-form/` | Formulário de cadastro e edição de filme |
 | `login/`, `cadastro/` | Entrada e criação de conta |
 | `meus-alugueis/` | Histórico e cancelamento do CLIENTE |
 | `alugueis-admin/` | Todos os aluguéis e validação de código (ADMIN) |
@@ -149,6 +163,7 @@ cd filmes-api
 # Web
 cd filmes-web
 npm ci
+npx prettier --write "src/**/*.{ts,html,css}"
 npm test -- --watch=false
 npm run build
 npm start
@@ -160,29 +175,42 @@ npm start
 - `PAGAMENTO_SIMULADO=RECUSADO` faz o pagamento simulado recusar, para demonstrar o erro.
 - O banco H2 fica em `filmes-api/data/`, fora do git. Para começar do zero, pare a API e apague essa pasta.
 
+## Convenções gerais
+
+- Não escreva comentários no código (Java, TypeScript, HTML, CSS e `application.properties`). Nomes de classes, métodos, variáveis e testes devem explicar a intenção.
+- Siga SOLID: uma responsabilidade por classe, regra nova como classe nova, dependência por interface. O README mostra onde cada princípio já aparece.
+- Legibilidade: métodos públicos contam o caso de uso em poucos passos, e os detalhes vão para métodos privados com nome que explique o passo. Use nomes descritivos; letras soltas só como índice de `for`.
+
 ## Convenções da API
 
 - Siga `controller` → `service` → `repository`. Controllers só adaptam HTTP, services concentram as regras e repositories só acessam dados.
+- Formatação: 4 espaços, imports explícitos (o `*` só aparece nos `import static` dos testes, para Assertions, Mockito e MockMvc) e linhas de até 110 caracteres. Logs com `@Slf4j` e injeção por construtor com `@RequiredArgsConstructor`, ambos do Lombok.
+- Um service por caso de uso. Os services recebem interfaces (repositórios, gateways, token, `Clock`), nunca a implementação concreta.
+- Regra nova do aluguel, do cancelamento ou do filme: crie uma classe `@Component` que implemente `ValidadorAluguel`, `ValidadorCancelamento` ou `ValidadorFilme` e defina a posição com `@Order`. Não acrescente `if` nos services.
+- Erro novo: crie uma classe que estenda `ErroDaAplicacao` e informe o status e o título. Não acrescente métodos no `ApiExceptionHandler`.
 - Use DTOs (records em `dto/`) nas fronteiras HTTP; nunca exponha entidades JPA. Valide a entrada com Bean Validation nos DTOs, com mensagens em português.
-- Erros de negócio usam as exceções de `service/exception` e são traduzidos por `config/ApiExceptionHandler` em ProblemDetail (`title`, `status`, `detail` e, em erros de validação, `erros` por campo). Status usados: 400 validação, 401 sem login ou credenciais inválidas, 403 perfil ou dono errado, 404 não encontrado, 409 duplicidade ou conflito de concorrência, 422 regra de negócio.
+- Erros de negócio usam as exceções de `service/exception` (todas herdam de `ErroDaAplicacao`) e são traduzidos por `config/ApiExceptionHandler` em ProblemDetail (`title`, `status`, `detail` e, em erros de validação, `erros` por campo). Status usados: 400 validação, 401 sem login ou credenciais inválidas, 403 perfil ou dono errado, 404 não encontrado, 409 duplicidade ou conflito de concorrência, 422 regra de negócio.
 - A autorização é do servidor: regras por rota em `config/SecurityConfig` e verificação de dono nos services.
 - Senhas são gravadas com BCrypt. Não registre senhas, tokens ou segredos em log e não coloque segredos ou credenciais padrão no código.
 - Concorrência: `Filme`, `Aluguel` e `Usuario` têm `@Version`, e conflitos viram 409 com pedido para tentar de novo. A edição de filme compara a `versao` enviada com a atual (`VersaoDesatualizadaException`, 409), porque o `@Version` sozinho não percebe mudanças feitas antes de a requisição chegar; `FilmeResponse` expõe a `versao` para isso. A expiração roda a cada minuto e também é aplicada ao filme no momento do aluguel. As respostas sempre mostram o status efetivo.
-- Pagamento e reembolso passam por `service/pagamento/PagamentoGateway`; a implementação atual é simulada e o cliente nunca escolhe o resultado.
+- Pagamento e reembolso passam por `GatewayDeCobranca` e `GatewayDeReembolso` (`service/pagamento`); a implementação atual é simulada e o cliente nunca escolhe o resultado.
 
 ## Convenções do web
 
 - Componentes standalone, formulários reativos e signals. O app é zoneless (não usa `zone.js`): todo estado alterado de forma assíncrona deve ficar em signals.
 - Serviços HTTP por domínio (`filme.ts`, `aluguel.ts`). Não espalhe URLs pelos componentes.
 - O interceptor só envia `Authorization: Bearer` para a API e nunca para login e cadastro. Em resposta 401, encerra a sessão e volta ao login.
-- Guards e o perfil guardado na sessão servem só à navegação; quem autoriza é a API. Não chame `AuthService.token()` nem `estaLogado()` em templates (eles podem encerrar a sessão); use os signals `usuario`, `ehAdmin` e `ehCliente`.
+- Guards e o perfil guardado na sessão servem só à navegação; quem autoriza é a API. Não chame `SessaoService.token()` nem `estaLogado()` em templates (eles podem encerrar a sessão); use os signals `usuario`, `ehAdmin` e `ehCliente`.
+- Quem só lê a sessão injeta `SessaoService`; só login e cadastro usam o `AuthService`. Para guardar a sessão em outro lugar, forneça outra implementação de `RepositorioSessao`.
 - Textos de interface em português. Toda chamada à API mostra mensagem de sucesso, validação ou erro, usando `mensagemDeErro`.
+- Mensagens de tela: crie um `Mensagem` no componente (`mostrar`, `mostrarErro`, `limpar`) e exiba com `<app-aviso [mensagem]="mensagem" />`. Não repita o HTML nem o CSS do aviso.
+- Formatação pelo Prettier (`.prettierrc`: 100 colunas e aspas simples). Rode `npx prettier --write "src/**/*.{ts,html,css}"` antes de enviar.
 
 ## Testes
 
 - **API** (`filmes-api/src/test`): testes unitários de modelo e serviço (Mockito, com relógio fixo para os prazos), validação dos DTOs, JWT e testes de API com MockMvc. `SegurancaApiTest` cobre os acessos 401/403 e `AluguelFluxoApiTest` cobre o fluxo completo. O perfil `test` usa H2 em memória.
 - **Web** (`*.spec.ts`): Vitest com `HttpTestingController`. Componentes que usam HTTP ou rotas precisam de `provideHttpClient()`, `provideHttpClientTesting()` e `provideRouter([])`. Quando o componente chama a API no `ngOnInit`, use `fixture.detectChanges()`, responda as requisições e só então `await fixture.whenStable()`.
-- **Estado verificado em 16/11/2026:** 74 testes da API e 57 do Angular passando, build de produção e checagem estrita de templates sem erros. O fluxo completo no navegador (cadastro, promoção a ADMIN pelo console do H2, filme, aluguel, validação do código e cancelamento) foi testado antes da checagem de versão na edição; esse caso é coberto por `AluguelFluxoApiTest` e pelos testes do formulário.
+- **Estado verificado em 19/11/2026, depois da revisão de legibilidade:** 82 testes da API (no Java 21) e 62 do Angular passando, e build de produção com checagem estrita de templates sem erros. Os cenários e as verificações dos testes de ponta a ponta da API (`AluguelFluxoApiTest` e `SegurancaApiTest`) não mudaram nas refatorações; na revisão de legibilidade eles só ganharam métodos auxiliares (`consultar`, `numero`, `cadastroJson` e `loginJson`). O fluxo completo no navegador (cadastro, promoção a ADMIN pelo console do H2, filme, aluguel, validação do código e cancelamento) foi testado em 16/11/2026, antes da checagem de versão e das refatorações; esses casos são cobertos pelos testes automáticos.
 
 ## Limitações conhecidas
 
