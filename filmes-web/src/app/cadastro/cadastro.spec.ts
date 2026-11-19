@@ -38,12 +38,23 @@ describe('Cadastro', () => {
 
   it('cria a conta, entra e abre o catálogo com boas-vindas', () => {
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    fixture.componentInstance.form.setValue({ nome: 'Ana', email: 'ana@teste.com', senha: 'senha123' });
+    fixture.componentInstance.form.setValue({
+      nome: 'Ana',
+      email: 'ana@teste.com',
+      senha: 'senha123',
+    });
 
     fixture.componentInstance.cadastrar();
     const cadastro = http.expectOne(`${API_URL}/auth/cadastro`);
-    expect(cadastro.request.body).toEqual({ nome: 'Ana', email: 'ana@teste.com', senha: 'senha123' });
-    cadastro.flush({ id: 1, nome: 'Ana', email: 'ana@teste.com', perfil: 'CLIENTE' }, { status: 201, statusText: 'Created' });
+    expect(cadastro.request.body).toEqual({
+      nome: 'Ana',
+      email: 'ana@teste.com',
+      senha: 'senha123',
+    });
+    cadastro.flush(
+      { id: 1, nome: 'Ana', email: 'ana@teste.com', perfil: 'CLIENTE' },
+      { status: 201, statusText: 'Created' },
+    );
     http.expectOne(`${API_URL}/auth/login`).flush({
       token: 'abc',
       tipo: 'Bearer',
@@ -55,12 +66,19 @@ describe('Cadastro', () => {
   });
 
   it('mostra a mensagem da API quando o e-mail já está em uso', async () => {
-    fixture.componentInstance.form.setValue({ nome: 'Ana', email: 'ana@teste.com', senha: 'senha123' });
+    fixture.componentInstance.form.setValue({
+      nome: 'Ana',
+      email: 'ana@teste.com',
+      senha: 'senha123',
+    });
 
     fixture.componentInstance.cadastrar();
     http
       .expectOne(`${API_URL}/auth/cadastro`)
-      .flush({ status: 409, detail: 'Já existe uma conta com este e-mail.' }, { status: 409, statusText: 'Conflict' });
+      .flush(
+        { status: 409, detail: 'Já existe uma conta com este e-mail.' },
+        { status: 409, statusText: 'Conflict' },
+      );
     await fixture.whenStable();
 
     expect(fixture.nativeElement.textContent).toContain('Já existe uma conta com este e-mail.');

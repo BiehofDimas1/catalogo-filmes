@@ -1,11 +1,6 @@
 <h1>Criar conta</h1>
 
-@if (mensagem()) {
-  <div class="aviso" role="status">{{ mensagem() }}</div>
-}
-@if (erro()) {
-  <div class="aviso erro" role="alert">{{ erro() }}</div>
-}
+<app-aviso [mensagem]="mensagem" />
 
 <form [formGroup]="form" (ngSubmit)="cadastrar()">
   <label for="nome">Nome</label>
@@ -27,7 +22,9 @@
   }
 
   <div class="acoes">
-    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Cadastrando...' : 'Cadastrar' }}</button>
+    <button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Cadastrando...' : 'Cadastrar' }}
+    </button>
     <a routerLink="/login">Já tenho conta</a>
   </div>
 </form>

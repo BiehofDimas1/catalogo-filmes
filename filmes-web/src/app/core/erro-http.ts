@@ -1,17 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-/** Formato ProblemDetail que a API devolve nos erros. */
 interface Problema {
   title?: string;
   detail?: string;
   erros?: Record<string, string>;
 }
 
-/**
- * Converte um erro HTTP em mensagem para o usuário, usando o `detail`
- * e os erros por campo enviados pela API.
- */
-export function mensagemDeErro(erro: unknown, padrao = 'Não foi possível concluir a operação.'): string {
+export function mensagemDeErro(
+  erro: unknown,
+  padrao = 'Não foi possível concluir a operação.',
+): string {
   if (!(erro instanceof HttpErrorResponse)) {
     return padrao;
   }

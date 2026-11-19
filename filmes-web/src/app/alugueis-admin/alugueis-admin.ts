@@ -3,11 +3,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Aluguel, AluguelService, ROTULO_STATUS, ValidacaoAcesso } from '../aluguel';
 import { mensagemDeErro } from '../core/erro-http';
+import { Aviso } from '../shared/aviso/aviso';
+import { Mensagem } from '../shared/aviso/mensagem';
 
-/** Tela do ADMIN: todos os aluguéis e validação de códigos de acesso. */
 @Component({
   selector: 'app-alugueis-admin',
-  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, Aviso],
   templateUrl: './alugueis-admin.html',
   styleUrl: './alugueis-admin.css',
 })
@@ -17,10 +18,10 @@ export class AlugueisAdmin implements OnInit {
 
   alugueis = signal<Aluguel[]>([]);
   carregando = signal(true);
-  mensagem = signal('');
+  mensagem = new Mensagem();
 
   validacao = signal<ValidacaoAcesso | null>(null);
-  erroValidacao = signal('');
+  avisoValidacao = new Mensagem();
   validando = signal(false);
 
   form = new FormGroup({
@@ -38,20 +39,19 @@ export class AlugueisAdmin implements OnInit {
         this.alugueis.set(lista);
         this.carregando.set(false);
       },
-      error: (e) => {
+      error: (erro) => {
         this.carregando.set(false);
-        this.mensagem.set(mensagemDeErro(e, 'Não foi possível carregar os aluguéis.'));
+        this.mensagem.mostrarErro(mensagemDeErro(erro, 'Não foi possível carregar os aluguéis.'));
       },
     });
   }
 
-  /** Confere o código sem consumi-lo: o mesmo código pode ser validado várias vezes enquanto vale. */
   validar() {
     this.validacao.set(null);
-    this.erroValidacao.set('');
+    this.avisoValidacao.limpar();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.erroValidacao.set('Informe o código de acesso.');
+      this.avisoValidacao.mostrarErro('Informe o código de acesso.');
       return;
     }
 
@@ -60,12 +60,11 @@ export class AlugueisAdmin implements OnInit {
       next: (resultado) => {
         this.validando.set(false);
         this.validacao.set(resultado);
-        // Recarrega a lista para ela mostrar o mesmo status da validação.
         this.carregar();
       },
-      error: (e) => {
+      error: (erro) => {
         this.validando.set(false);
-        this.erroValidacao.set(mensagemDeErro(e, 'Não foi possível validar o código.'));
+        this.avisoValidacao.mostrarErro(mensagemDeErro(erro, 'Não foi possível validar o código.'));
       },
     });
   }

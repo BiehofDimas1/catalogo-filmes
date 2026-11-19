@@ -1,15 +1,19 @@
 <header class="topo">
   <a class="marca" routerLink="/filmes">Catálogo de Filmes</a>
   <nav>
-    @if (auth.usuario(); as usuario) {
-      <a routerLink="/filmes" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">Catálogo</a>
+    @if (sessao.usuario(); as usuario) {
+      <a routerLink="/filmes" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }"
+        >Catálogo</a
+      >
       @if (usuario.perfil === 'CLIENTE') {
         <a routerLink="/meus-alugueis" routerLinkActive="ativo">Meus aluguéis</a>
       } @else {
         <a routerLink="/filmes/novo" routerLinkActive="ativo">Novo filme</a>
         <a routerLink="/admin/alugueis" routerLinkActive="ativo">Aluguéis</a>
       }
-      <span class="usuario">{{ usuario.nome }} · {{ usuario.perfil === 'ADMIN' ? 'Administrador' : 'Cliente' }}</span>
+      <span class="usuario"
+        >{{ usuario.nome }} · {{ usuario.perfil === 'ADMIN' ? 'Administrador' : 'Cliente' }}</span
+      >
       <button type="button" class="sair" (click)="sair()">Sair</button>
     } @else {
       <a routerLink="/login" routerLinkActive="ativo">Entrar</a>

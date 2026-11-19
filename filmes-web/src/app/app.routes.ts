@@ -9,9 +9,24 @@ import { MeusAlugueis } from './meus-alugueis/meus-alugueis';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'filmes' },
-  { path: 'login', component: Login, canActivate: [visitanteGuard], title: 'Entrar | Catálogo de Filmes' },
-  { path: 'cadastro', component: Cadastro, canActivate: [visitanteGuard], title: 'Criar conta | Catálogo de Filmes' },
-  { path: 'filmes', component: FilmeLista, canActivate: [autenticadoGuard], title: 'Catálogo | Catálogo de Filmes' },
+  {
+    path: 'login',
+    component: Login,
+    canActivate: [visitanteGuard],
+    title: 'Entrar | Catálogo de Filmes',
+  },
+  {
+    path: 'cadastro',
+    component: Cadastro,
+    canActivate: [visitanteGuard],
+    title: 'Criar conta | Catálogo de Filmes',
+  },
+  {
+    path: 'filmes',
+    component: FilmeLista,
+    canActivate: [autenticadoGuard],
+    title: 'Catálogo | Catálogo de Filmes',
+  },
   {
     path: 'filmes/novo',
     component: FilmeForm,

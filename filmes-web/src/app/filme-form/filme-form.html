@@ -1,8 +1,6 @@
 <h1>{{ id === null ? 'Novo filme' : 'Editar filme' }}</h1>
 
-@if (mensagem()) {
-  <p class="aviso" [class.erro]="erro()" role="status">{{ mensagem() }}</p>
-}
+<app-aviso [mensagem]="mensagem" />
 
 <form [formGroup]="form" (ngSubmit)="salvar()">
   <label for="titulo">Título</label>
@@ -24,7 +22,9 @@
   }
 
   <div class="botoes">
-    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Salvando...' : 'Salvar' }}</button>
+    <button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Salvando...' : 'Salvar' }}
+    </button>
     <a routerLink="/filmes">Cancelar</a>
   </div>
 </form>

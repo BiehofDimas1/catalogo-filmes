@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { AuthService } from './core/auth/auth';
+import { SessaoService } from './core/auth/sessao';
 
 @Component({
   selector: 'app-root',
@@ -9,11 +9,11 @@ import { AuthService } from './core/auth/auth';
   styleUrl: './app.css',
 })
 export class App {
-  protected auth = inject(AuthService);
+  protected sessao = inject(SessaoService);
   private router = inject(Router);
 
   sair() {
-    this.auth.sair();
+    this.sessao.encerrar();
     void this.router.navigate(['/login']);
   }
 }

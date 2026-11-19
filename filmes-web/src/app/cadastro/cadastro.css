@@ -35,16 +35,6 @@ button {
   cursor: pointer;
 }
 
-.aviso {
+app-aviso {
   max-width: 400px;
-  padding: 10px 14px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  background: #e0f5e4;
-  color: #1b5e20;
-}
-
-.aviso.erro {
-  background: #fde0e0;
-  color: #b00020;
 }

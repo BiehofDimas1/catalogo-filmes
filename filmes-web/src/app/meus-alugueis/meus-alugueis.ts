@@ -3,11 +3,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Aluguel, AluguelService, ROTULO_STATUS } from '../aluguel';
 import { mensagemDeErro } from '../core/erro-http';
+import { Aviso } from '../shared/aviso/aviso';
+import { Mensagem } from '../shared/aviso/mensagem';
 
-/** Histórico do cliente: aluguéis ativos, expirados e cancelados, com cancelamento dentro do prazo. */
 @Component({
   selector: 'app-meus-alugueis',
-  imports: [CurrencyPipe, DatePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, RouterLink, Aviso],
   templateUrl: './meus-alugueis.html',
   styleUrl: './meus-alugueis.css',
 })
@@ -18,8 +19,7 @@ export class MeusAlugueis implements OnInit {
   alugueis = signal<Aluguel[]>([]);
   carregando = signal(true);
   emAndamento = signal<number | null>(null);
-  mensagem = signal('');
-  erro = signal(false);
+  mensagem = new Mensagem();
 
   ngOnInit() {
     this.carregar();
@@ -32,40 +32,40 @@ export class MeusAlugueis implements OnInit {
         this.alugueis.set(lista);
         this.carregando.set(false);
       },
-      error: (e) => {
+      error: (erro) => {
         this.carregando.set(false);
-        this.mostrar(mensagemDeErro(e, 'Não foi possível carregar os seus aluguéis.'), true);
+        this.mensagem.mostrarErro(
+          mensagemDeErro(erro, 'Não foi possível carregar os seus aluguéis.'),
+        );
       },
     });
   }
 
   cancelar(aluguel: Aluguel) {
-    const confirmado = confirm(
-      `Cancelar o aluguel de "${aluguel.filmeTitulo}"? O valor será reembolsado (simulação).`,
-    );
-    if (!confirmado) {
+    if (!this.confirmarCancelamento(aluguel)) {
       return;
     }
     this.emAndamento.set(aluguel.id);
     this.service.cancelar(aluguel.id).subscribe({
       next: (cancelado) => {
         this.emAndamento.set(null);
-        this.mostrar(
-          `Aluguel de "${cancelado.filmeTitulo}" cancelado. Reembolso simulado: ${cancelado.transacaoReembolso}.`,
-          false,
+        this.mensagem.mostrar(
+          `Aluguel de "${cancelado.filmeTitulo}" cancelado. ` +
+            `Reembolso simulado: ${cancelado.transacaoReembolso}.`,
         );
         this.carregar();
       },
-      error: (e) => {
+      error: (erro) => {
         this.emAndamento.set(null);
-        this.mostrar(mensagemDeErro(e, 'Não foi possível cancelar o aluguel.'), true);
+        this.mensagem.mostrarErro(mensagemDeErro(erro, 'Não foi possível cancelar o aluguel.'));
         this.carregar();
       },
     });
   }
 
-  private mostrar(texto: string, ehErro: boolean) {
-    this.mensagem.set(texto);
-    this.erro.set(ehErro);
+  private confirmarCancelamento(aluguel: Aluguel): boolean {
+    return confirm(
+      `Cancelar o aluguel de "${aluguel.filmeTitulo}"? O valor será reembolsado (simulação).`,
+    );
   }
 }
