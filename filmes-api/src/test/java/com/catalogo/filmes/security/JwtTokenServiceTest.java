@@ -11,11 +11,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TokenServiceTest {
+class JwtTokenServiceTest {
 
     private static final String SEGREDO = "segredo-de-teste-com-mais-de-32-bytes!!";
 
-    private final TokenService service = new TokenService(new JwtProperties(SEGREDO, Duration.ofHours(2)));
+    private final JwtTokenService service =
+            new JwtTokenService(new JwtProperties(SEGREDO, Duration.ofHours(2)));
 
     private Usuario usuario() {
         return new Usuario("Ana", "ana@teste.com", "hash", Perfil.CLIENTE, Instant.now());
@@ -23,9 +24,9 @@ class TokenServiceTest {
 
     @Test
     void tokenGeradoIdentificaOUsuario() {
-        TokenService.TokenGerado gerado = service.gerar(usuario());
+        TokenGerado gerado = service.gerar(usuario());
 
-        assertEquals(Optional.of("ana@teste.com"), service.validar(gerado.token()));
+        assertEquals(Optional.of("ana@teste.com"), service.verificar(gerado.token()));
         assertTrue(gerado.expiraEm().isAfter(Instant.now().plus(Duration.ofMinutes(119))));
     }
 
@@ -34,37 +35,38 @@ class TokenServiceTest {
         String token = service.gerar(usuario()).token();
         String alterado = token.substring(0, token.length() - 2) + (token.endsWith("A") ? "BB" : "AA");
 
-        assertTrue(service.validar(alterado).isEmpty());
-        assertTrue(service.validar("nao-e-um-jwt").isEmpty());
+        assertTrue(service.verificar(alterado).isEmpty());
+        assertTrue(service.verificar("nao-e-um-jwt").isEmpty());
     }
 
     @Test
     void tokenAssinadoComOutraChaveEhRecusado() {
-        TokenService outro = new TokenService(new JwtProperties("outro-segredo-diferente-com-mais-de-32-bytes", Duration.ofHours(2)));
+        JwtTokenService outro = new JwtTokenService(
+                new JwtProperties("outro-segredo-diferente-com-mais-de-32-bytes", Duration.ofHours(2)));
 
-        assertTrue(service.validar(outro.gerar(usuario()).token()).isEmpty());
+        assertTrue(service.verificar(outro.gerar(usuario()).token()).isEmpty());
     }
 
     @Test
     void tokenExpiradoEhRecusado() {
-        TokenService expirado = new TokenService(new JwtProperties(SEGREDO, Duration.ofSeconds(-30)));
+        JwtTokenService expirado = new JwtTokenService(new JwtProperties(SEGREDO, Duration.ofSeconds(-30)));
 
-        assertTrue(service.validar(expirado.gerar(usuario()).token()).isEmpty());
+        assertTrue(service.verificar(expirado.gerar(usuario()).token()).isEmpty());
     }
 
     @Test
     void segredoCurtoImpedeOInicio() {
         assertThrows(IllegalStateException.class,
-                () -> new TokenService(new JwtProperties("curto", Duration.ofHours(2))));
+                () -> new JwtTokenService(new JwtProperties("curto", Duration.ofHours(2))));
     }
 
     @Test
     void semSegredoUsaChaveAleatoria() {
-        TokenService aleatorio = new TokenService(new JwtProperties("", Duration.ofHours(2)));
+        JwtTokenService aleatorio = new JwtTokenService(new JwtProperties("", Duration.ofHours(2)));
 
         String token = aleatorio.gerar(usuario()).token();
 
-        assertEquals(Optional.of("ana@teste.com"), aleatorio.validar(token));
-        assertTrue(service.validar(token).isEmpty());
+        assertEquals(Optional.of("ana@teste.com"), aleatorio.verificar(token));
+        assertTrue(service.verificar(token).isEmpty());
     }
 }

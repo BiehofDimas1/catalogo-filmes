@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
 
-/** Relógio único da aplicação; nos testes ele é trocado por um relógio fixo. */
 @Configuration
 public class RelogioConfig {
 

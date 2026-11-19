@@ -9,7 +9,6 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** Cenários de acesso não autorizado (requisitos 2 e 6). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -35,21 +34,25 @@ class SegurancaApiTest extends ApiTestBase {
         String cliente = novoCliente("Ana");
 
         mvc.perform(post("/filmes").header(AUTORIZACAO, bearer(cliente))
-                        .contentType(MediaType.APPLICATION_JSON).content(filmeJson("Filme do cliente", 90, 1)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(filmeJson("Filme do cliente", 90, 1)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403));
         mvc.perform(put("/filmes/1").header(AUTORIZACAO, bearer(cliente))
                         .contentType(MediaType.APPLICATION_JSON).content(filmeJson("Outro", 90, 1)))
                 .andExpect(status().isForbidden());
-        mvc.perform(delete("/filmes/1").header(AUTORIZACAO, bearer(cliente))).andExpect(status().isForbidden());
-        mvc.perform(patch("/filmes/1/reativar").header(AUTORIZACAO, bearer(cliente))).andExpect(status().isForbidden());
+        mvc.perform(delete("/filmes/1").header(AUTORIZACAO, bearer(cliente)))
+                .andExpect(status().isForbidden());
+        mvc.perform(patch("/filmes/1/reativar").header(AUTORIZACAO, bearer(cliente)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void clienteNaoVeAlugueisDeTodosNemValidaCodigos() throws Exception {
         String cliente = novoCliente("Ana");
 
-        mvc.perform(get("/alugueis").header(AUTORIZACAO, bearer(cliente))).andExpect(status().isForbidden());
+        mvc.perform(get("/alugueis").header(AUTORIZACAO, bearer(cliente)))
+                .andExpect(status().isForbidden());
         mvc.perform(get("/alugueis/acesso/qualquer").header(AUTORIZACAO, bearer(cliente)))
                 .andExpect(status().isForbidden());
     }
@@ -62,7 +65,8 @@ class SegurancaApiTest extends ApiTestBase {
         mvc.perform(post("/alugueis").header(AUTORIZACAO, bearer(admin))
                         .contentType(MediaType.APPLICATION_JSON).content(aluguelJson(filmeId)))
                 .andExpect(status().isForbidden());
-        mvc.perform(get("/alugueis/meus").header(AUTORIZACAO, bearer(admin))).andExpect(status().isForbidden());
+        mvc.perform(get("/alugueis/meus").header(AUTORIZACAO, bearer(admin)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -74,7 +78,7 @@ class SegurancaApiTest extends ApiTestBase {
         String aluguel = corpo(mvc.perform(post("/alugueis").header(AUTORIZACAO, bearer(ana))
                         .contentType(MediaType.APPLICATION_JSON).content(aluguelJson(filmeId)))
                 .andExpect(status().isCreated()));
-        long aluguelId = ((Number) com.jayway.jsonpath.JsonPath.read(aluguel, "$.id")).longValue();
+        long aluguelId = numero(aluguel, "$.id");
 
         mvc.perform(post("/alugueis/" + aluguelId + "/cancelar").header(AUTORIZACAO, bearer(bruno)))
                 .andExpect(status().isForbidden());
@@ -100,7 +104,7 @@ class SegurancaApiTest extends ApiTestBase {
         cadastrar("Ana", email, "senha123");
 
         mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"senha\":\"errada99\"}"))
+                        .content(loginJson(email, "errada99")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
     }
@@ -111,14 +115,14 @@ class SegurancaApiTest extends ApiTestBase {
         cadastrar("Ana", email, "senha123");
 
         mvc.perform(post("/auth/cadastro").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"Ana 2\",\"email\":\"" + email.toUpperCase() + "\",\"senha\":\"senha123\"}"))
+                        .content(cadastroJson("Ana 2", email.toUpperCase(), "senha123")))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void cadastroInvalidoRecebe400ComErroPorCampo() throws Exception {
         mvc.perform(post("/auth/cadastro").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"\",\"email\":\"nao-e-email\",\"senha\":\"123\"}"))
+                        .content(cadastroJson("", "nao-e-email", "123")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.erros.nome").exists())
                 .andExpect(jsonPath("$.erros.email").exists())

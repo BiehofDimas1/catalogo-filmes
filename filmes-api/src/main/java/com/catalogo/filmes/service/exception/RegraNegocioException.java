@@ -1,9 +1,18 @@
 package com.catalogo.filmes.service.exception;
 
-/** A operação viola uma regra do aluguel (limite, disponibilidade, prazo, pagamento). Vira HTTP 422. */
-public class RegraNegocioException extends RuntimeException {
+public class RegraNegocioException extends ErroDaAplicacao {
 
     public RegraNegocioException(String mensagem) {
         super(mensagem);
+    }
+
+    @Override
+    public int status() {
+        return 422;
+    }
+
+    @Override
+    public String titulo() {
+        return "Operação não permitida";
     }
 }

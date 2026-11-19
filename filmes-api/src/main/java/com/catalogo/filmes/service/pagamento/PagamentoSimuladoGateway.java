@@ -1,27 +1,19 @@
 package com.catalogo.filmes.service.pagamento;
 
 import com.catalogo.filmes.config.PagamentoSimuladoProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Pagamento e reembolso simulados: nenhum dinheiro é movimentado.
- * O resultado da cobrança vem só da configuração do servidor ({@code pagamento.simulado.resultado}).
- */
+@Slf4j
 @Component
-public class PagamentoSimuladoGateway implements PagamentoGateway {
-
-    private static final Logger log = LoggerFactory.getLogger(PagamentoSimuladoGateway.class);
+@RequiredArgsConstructor
+public class PagamentoSimuladoGateway implements GatewayDeCobranca, GatewayDeReembolso {
 
     private final PagamentoSimuladoProperties propriedades;
-
-    public PagamentoSimuladoGateway(PagamentoSimuladoProperties propriedades) {
-        this.propriedades = propriedades;
-    }
 
     @Override
     public ResultadoPagamento cobrar(BigDecimal valor, String descricao) {

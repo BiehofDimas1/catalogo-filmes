@@ -2,20 +2,23 @@ package com.catalogo.filmes.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-/**
- * Responde 401 (sem login) e 403 (perfil sem permissão) no mesmo formato ProblemDetail
- * usado pelo restante da API, para a interface mostrar a mensagem.
- */
 @Component
+@RequiredArgsConstructor
 public class RespostaErroSeguranca implements AuthenticationEntryPoint, AccessDeniedHandler {
+
+    private final JsonMapper json;
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
@@ -31,32 +34,17 @@ public class RespostaErroSeguranca implements AuthenticationEntryPoint, AccessDe
                 "O seu perfil não tem permissão para esta operação.");
     }
 
-    private static void escrever(HttpServletRequest request, HttpServletResponse response, int status,
-                                 String titulo, String detalhe) throws IOException {
+    private void escrever(HttpServletRequest request, HttpServletResponse response, int status,
+                          String titulo, String detalhe) throws IOException {
+        Map<String, Object> problema = new LinkedHashMap<>();
+        problema.put("type", "about:blank");
+        problema.put("title", titulo);
+        problema.put("status", status);
+        problema.put("detail", detalhe);
+        problema.put("instance", request.getRequestURI());
         response.setStatus(status);
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/problem+json");
-        response.getWriter().write("{\"type\":\"about:blank\",\"title\":\"" + json(titulo)
-                + "\",\"status\":" + status
-                + ",\"detail\":\"" + json(detalhe)
-                + "\",\"instance\":\"" + json(request.getRequestURI()) + "\"}");
-    }
-
-    private static String json(String texto) {
-        StringBuilder saida = new StringBuilder(texto.length());
-        for (char c : texto.toCharArray()) {
-            switch (c) {
-                case '"' -> saida.append("\\\"");
-                case '\\' -> saida.append("\\\\");
-                default -> {
-                    if (c < 0x20) {
-                        saida.append(String.format("\\u%04x", (int) c));
-                    } else {
-                        saida.append(c);
-                    }
-                }
-            }
-        }
-        return saida.toString();
+        json.writeValue(response.getWriter(), problema);
     }
 }

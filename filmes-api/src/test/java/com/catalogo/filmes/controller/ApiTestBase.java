@@ -11,10 +11,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Apoio para os testes de API: cadastro, login, promoção de ADMIN e criação de filmes. */
 abstract class ApiTestBase {
 
     protected static final String AUTORIZACAO = "Authorization";
@@ -26,7 +26,6 @@ abstract class ApiTestBase {
     @Autowired
     protected JdbcTemplate jdbc;
 
-    /** Nome único, para os testes não colidirem no banco compartilhado. */
     protected static String unico(String prefixo) {
         return prefixo + "-" + System.nanoTime() + "-" + SEQUENCIA.incrementAndGet();
     }
@@ -39,6 +38,10 @@ abstract class ApiTestBase {
         return resultado.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
     }
 
+    protected static long numero(String json, String caminho) {
+        return ((Number) JsonPath.read(json, caminho)).longValue();
+    }
+
     protected static List<Long> ids(String json) {
         List<Number> ids = JsonPath.read(json, "$[*].id");
         return ids.stream().map(Number::longValue).toList();
@@ -49,7 +52,6 @@ abstract class ApiTestBase {
                 + ",\"licencasDisponiveis\":" + licencas + "}";
     }
 
-    /** Corpo da edição: inclui a versão do filme carregada no formulário. */
     protected static String filmeJson(String titulo, int duracao, int licencas, long versao) {
         return "{\"titulo\":\"" + titulo + "\",\"duracaoMinutos\":" + duracao
                 + ",\"licencasDisponiveis\":" + licencas + ",\"versao\":" + versao + "}";
@@ -59,21 +61,34 @@ abstract class ApiTestBase {
         return "{\"filmeId\":" + filmeId + "}";
     }
 
+    protected static String cadastroJson(String nome, String email, String senha) {
+        return "{\"nome\":\"" + nome + "\",\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}";
+    }
+
+    protected static String loginJson(String email, String senha) {
+        return "{\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}";
+    }
+
     protected String novoEmail(String nome) {
         return unico(nome.toLowerCase()) + "@teste.com";
     }
 
     protected void cadastrar(String nome, String email, String senha) throws Exception {
         mvc.perform(post("/auth/cadastro").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"" + nome + "\",\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}"))
+                        .content(cadastroJson(nome, email, senha)))
                 .andExpect(status().isCreated());
     }
 
     protected String login(String email, String senha) throws Exception {
         String resposta = corpo(mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}"))
+                        .content(loginJson(email, senha)))
                 .andExpect(status().isOk()));
         return JsonPath.read(resposta, "$.token");
+    }
+
+    protected String consultar(String url, String token) throws Exception {
+        return corpo(mvc.perform(get(url).header(AUTORIZACAO, bearer(token)))
+                .andExpect(status().isOk()));
     }
 
     protected String novoCliente(String nome) throws Exception {
@@ -82,7 +97,6 @@ abstract class ApiTestBase {
         return login(email, "senha123");
     }
 
-    /** Cria um ADMIN pelo mesmo caminho documentado no README: cadastro comum + SQL no console do H2. */
     protected String novoAdmin() throws Exception {
         String email = novoEmail("admin");
         cadastrar("Admin", email, "senha123");
@@ -95,6 +109,6 @@ abstract class ApiTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(filmeJson(titulo, 120, licencas)))
                 .andExpect(status().isCreated()));
-        return ((Number) JsonPath.read(resposta, "$.id")).longValue();
+        return numero(resposta, "$.id");
     }
 }

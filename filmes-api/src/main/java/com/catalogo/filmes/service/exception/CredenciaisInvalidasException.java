@@ -1,9 +1,18 @@
 package com.catalogo.filmes.service.exception;
 
-/** E-mail ou senha incorretos no login. Vira HTTP 401. */
-public class CredenciaisInvalidasException extends RuntimeException {
+public class CredenciaisInvalidasException extends ErroDaAplicacao {
 
     public CredenciaisInvalidasException(String mensagem) {
         super(mensagem);
+    }
+
+    @Override
+    public int status() {
+        return 401;
+    }
+
+    @Override
+    public String titulo() {
+        return "Não autenticado";
     }
 }

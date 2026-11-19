@@ -1,6 +1,17 @@
 package com.catalogo.filmes.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,10 +20,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Aluguel de um filme por um cliente: é o "pedido" do fluxo principal.
- * Consome uma licença do filme enquanto está ativo.
- */
 @Entity
 @Table(name = "alugueis")
 @Getter
@@ -47,15 +54,12 @@ public class Aluguel {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
 
-    /** Identificador do pagamento simulado. */
     @Column(name = "transacao_pagamento", nullable = false, length = 60)
     private String transacaoPagamento;
 
-    /** Identificador do reembolso simulado, preenchido no cancelamento. */
     @Column(name = "transacao_reembolso", length = 60)
     private String transacaoReembolso;
 
-    /** Código de acesso ao filme (adaptação do QR Code do projeto de referência). */
     @Column(name = "codigo_acesso", nullable = false, unique = true, length = 36)
     private String codigoAcesso;
 
@@ -76,12 +80,10 @@ public class Aluguel {
         return aluguel;
     }
 
-    /** Status considerando o horário: um aluguel ativo que já venceu conta como expirado. */
     public StatusAluguel statusEm(Instant instante) {
         return estaVencido(instante) ? StatusAluguel.EXPIRADO : status;
     }
 
-    /** Ainda marcado como ativo, mas com a validade já encerrada. */
     public boolean estaVencido(Instant instante) {
         return status == StatusAluguel.ATIVO && !instante.isBefore(dataExpiracao);
     }

@@ -3,57 +3,69 @@ package com.catalogo.filmes.controller;
 import com.catalogo.filmes.dto.FilmeRequest;
 import com.catalogo.filmes.dto.FilmeResponse;
 import com.catalogo.filmes.security.UsuarioLogado;
-import com.catalogo.filmes.service.FilmeService;
+import com.catalogo.filmes.service.filme.AtivacaoFilmeService;
+import com.catalogo.filmes.service.filme.CadastroFilmeService;
+import com.catalogo.filmes.service.filme.ConsultaFilmeService;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Catálogo de filmes. Consultas para qualquer usuário logado; alterações só para ADMIN (ver SecurityConfig). */
 @RestController
 @RequestMapping("/filmes")
 @RequiredArgsConstructor
 public class FilmeController {
 
-    private final FilmeService service;
+    private final ConsultaFilmeService consultaService;
+    private final CadastroFilmeService cadastroService;
+    private final AtivacaoFilmeService ativacaoService;
 
     @GetMapping
     public List<FilmeResponse> listar(@AuthenticationPrincipal UsuarioLogado usuario) {
-        return service.listar(usuario.isAdmin());
+        return consultaService.listar(usuario.isAdmin());
     }
 
     @GetMapping("/{id}")
-    public FilmeResponse buscar(@PathVariable("id") Long id, @AuthenticationPrincipal UsuarioLogado usuario) {
-        return service.buscar(id, usuario.isAdmin());
+    public FilmeResponse buscar(@PathVariable("id") Long id,
+                                @AuthenticationPrincipal UsuarioLogado usuario) {
+        return consultaService.buscar(id, usuario.isAdmin());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FilmeResponse cadastrar(@Valid @RequestBody FilmeRequest dados) {
-        return service.cadastrar(dados);
+        return cadastroService.cadastrar(dados);
     }
 
-    /** A edição exige a versão carregada no formulário; se o filme mudou desde então, a resposta é 409. */
     @PutMapping("/{id}")
     public FilmeResponse atualizar(@PathVariable("id") Long id,
-                                   @Validated({Default.class, FilmeRequest.Edicao.class}) @RequestBody FilmeRequest dados) {
-        return service.atualizar(id, dados);
+                                   @Validated({Default.class, FilmeRequest.Edicao.class})
+                                   @RequestBody FilmeRequest dados) {
+        return cadastroService.atualizar(id, dados);
     }
 
-    /** Inativa o filme (não há exclusão física). */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void inativar(@PathVariable("id") Long id) {
-        service.inativar(id);
+        ativacaoService.inativar(id);
     }
 
     @PatchMapping("/{id}/reativar")
     public FilmeResponse reativar(@PathVariable("id") Long id) {
-        return service.reativar(id);
+        return ativacaoService.reativar(id);
     }
 }

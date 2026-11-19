@@ -10,8 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class FilmesApiApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(FilmesApiApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(FilmesApiApplication.class, args);
+    }
 }

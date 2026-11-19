@@ -7,10 +7,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Aluguel como a interface o vê. O status é o efetivo no momento da consulta:
- * um aluguel ativo que já venceu aparece como EXPIRADO.
- */
 public record AluguelResponse(
         Long id,
         Long filmeId,

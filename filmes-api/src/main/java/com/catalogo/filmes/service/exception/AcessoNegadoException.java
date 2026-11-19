@@ -1,9 +1,18 @@
 package com.catalogo.filmes.service.exception;
 
-/** O usuário está logado, mas o registro pertence a outra pessoa. Vira HTTP 403. */
-public class AcessoNegadoException extends RuntimeException {
+public class AcessoNegadoException extends ErroDaAplicacao {
 
     public AcessoNegadoException(String mensagem) {
         super(mensagem);
+    }
+
+    @Override
+    public int status() {
+        return 403;
+    }
+
+    @Override
+    public String titulo() {
+        return "Acesso negado";
     }
 }

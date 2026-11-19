@@ -1,7 +1,17 @@
 package com.catalogo.filmes.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +35,6 @@ public class Filme {
     @Column(nullable = false, length = 150)
     private String titulo;
 
-    /** Título em minúsculas e sem espaços repetidos; a coluna única impede filmes duplicados. */
     @Setter(AccessLevel.NONE)
     @Column(name = "titulo_normalizado", nullable = false, unique = true, length = 150)
     private String tituloNormalizado;
@@ -52,7 +61,6 @@ public class Filme {
         this.tituloNormalizado = normalizarTitulo(titulo);
     }
 
-    /** Remove espaços extras e ignora maiúsculas, para comparar títulos. */
     public static String normalizarTitulo(String titulo) {
         if (titulo == null) {
             return null;
