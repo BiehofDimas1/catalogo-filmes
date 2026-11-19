@@ -19,7 +19,8 @@ class AluguelTest {
         filme.setTitulo("Matriz");
         filme.setDuracaoMinutos(136);
         filme.setLicencasDisponiveis(1);
-        return Aluguel.novo(usuario, filme, INICIO, Duration.ofHours(48), new BigDecimal("9.90"), "PAG-1", "codigo-1");
+        return Aluguel.novo(usuario, filme, INICIO, Duration.ofHours(48), new BigDecimal("9.90"),
+                "PAG-1", "codigo-1");
     }
 
     @Test

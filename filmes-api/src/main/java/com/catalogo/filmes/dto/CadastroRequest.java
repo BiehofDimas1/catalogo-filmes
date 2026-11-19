@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/** Dados do cadastro público. Não há campo de perfil: toda conta nova é CLIENTE. */
 public record CadastroRequest(
         @NotBlank(message = "Informe o nome.")
         @Size(max = 100, message = "O nome deve ter no máximo 100 caracteres.")

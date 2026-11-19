@@ -1,11 +1,6 @@
 <h1>Entrar</h1>
 
-@if (mensagem()) {
-  <div class="aviso" role="status">{{ mensagem() }}</div>
-}
-@if (erro()) {
-  <div class="aviso erro" role="alert">{{ erro() }}</div>
-}
+<app-aviso [mensagem]="mensagem" />
 
 <form [formGroup]="form" (ngSubmit)="entrar()">
   <label for="email">E-mail</label>
@@ -21,7 +16,9 @@
   }
 
   <div class="acoes">
-    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Entrando...' : 'Entrar' }}</button>
+    <button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Entrando...' : 'Entrar' }}
+    </button>
     <a routerLink="/cadastro">Criar conta</a>
   </div>
 </form>

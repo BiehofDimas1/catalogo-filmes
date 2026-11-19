@@ -13,14 +13,12 @@ import java.util.Optional;
 
 public interface AluguelRepository extends JpaRepository<Aluguel, Long> {
 
-    /** Existe aluguel ativo (e ainda não vencido) do usuário para o filme? */
     boolean existsByUsuarioIdAndFilmeIdAndStatusAndDataExpiracaoAfter(
             Long usuarioId, Long filmeId, StatusAluguel status, Instant instante);
 
-    /** Quantidade de aluguéis ativos (e ainda não vencidos) do usuário. */
-    long countByUsuarioIdAndStatusAndDataExpiracaoAfter(Long usuarioId, StatusAluguel status, Instant instante);
+    long countByUsuarioIdAndStatusAndDataExpiracaoAfter(
+            Long usuarioId, StatusAluguel status, Instant instante);
 
-    /** Aluguéis do filme que ainda estão ativos, mas já venceram. */
     List<Aluguel> findByFilmeIdAndStatusAndDataExpiracaoLessThanEqual(
             Long filmeId, StatusAluguel status, Instant instante);
 

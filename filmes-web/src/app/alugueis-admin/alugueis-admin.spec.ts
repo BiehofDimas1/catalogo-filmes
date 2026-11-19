@@ -69,7 +69,6 @@ describe('AlugueisAdmin', () => {
       usuarioNome: 'Ana',
       dataExpiracao: '2026-11-17T12:00:00Z',
     });
-    // Depois de validar, a lista é recarregada para mostrar o status atual.
     http.expectOne(`${API_URL}/alugueis`).flush([aluguel]);
     await fixture.whenStable();
 
@@ -84,7 +83,10 @@ describe('AlugueisAdmin', () => {
     fixture.componentInstance.validar();
     http
       .expectOne(`${API_URL}/alugueis/acesso/nao-existe`)
-      .flush({ status: 404, detail: 'Código de acesso não encontrado.' }, { status: 404, statusText: 'Not Found' });
+      .flush(
+        { status: 404, detail: 'Código de acesso não encontrado.' },
+        { status: 404, statusText: 'Not Found' },
+      );
     await fixture.whenStable();
 
     expect(texto()).toContain('Código de acesso não encontrado.');

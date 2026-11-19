@@ -1,6 +1,5 @@
 package com.catalogo.filmes.service.pagamento;
 
-/** Resultado de uma cobrança: aprovada (com o identificador da transação) ou recusada. */
 public record ResultadoPagamento(boolean aprovado, String transacao) {
 
     public static ResultadoPagamento aprovado(String transacao) {

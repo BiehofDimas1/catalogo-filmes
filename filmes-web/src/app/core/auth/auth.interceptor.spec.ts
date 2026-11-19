@@ -3,8 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { API_URL } from '../api';
-import { AuthService, CHAVE_SESSAO } from './auth';
 import { authInterceptor } from './auth.interceptor';
+import { CHAVE_SESSAO } from './repositorio-sessao';
+import { SessaoService } from './sessao';
 
 describe('authInterceptor', () => {
   let http: HttpClient;
@@ -48,14 +49,20 @@ describe('authInterceptor', () => {
     http.post(`${API_URL}/auth/login`, {}).subscribe();
     http.post(`${API_URL}/auth/cadastro`, {}).subscribe();
 
-    expect(controle.expectOne(`${API_URL}/auth/login`).request.headers.has('Authorization')).toBe(false);
-    expect(controle.expectOne(`${API_URL}/auth/cadastro`).request.headers.has('Authorization')).toBe(false);
+    expect(controle.expectOne(`${API_URL}/auth/login`).request.headers.has('Authorization')).toBe(
+      false,
+    );
+    expect(
+      controle.expectOne(`${API_URL}/auth/cadastro`).request.headers.has('Authorization'),
+    ).toBe(false);
   });
 
   it('não envia o token para outros endereços', () => {
     http.get('https://exemplo.com/dados').subscribe();
 
-    expect(controle.expectOne('https://exemplo.com/dados').request.headers.has('Authorization')).toBe(false);
+    expect(
+      controle.expectOne('https://exemplo.com/dados').request.headers.has('Authorization'),
+    ).toBe(false);
   });
 
   it('encerra a sessão e volta ao login quando a API responde 401', () => {
@@ -65,10 +72,13 @@ describe('authInterceptor', () => {
     http.get(`${API_URL}/filmes`).subscribe({ error: () => (falhou = true) });
     controle
       .expectOne(`${API_URL}/filmes`)
-      .flush({ detail: 'Faça login para acessar este recurso.' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { detail: 'Faça login para acessar este recurso.' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
 
     expect(falhou).toBe(true);
-    expect(TestBed.inject(AuthService).usuario()).toBeNull();
+    expect(TestBed.inject(SessaoService).usuario()).toBeNull();
     expect(navegar).toHaveBeenCalledWith(['/login'], { queryParams: { sessao: 'expirada' } });
   });
 });

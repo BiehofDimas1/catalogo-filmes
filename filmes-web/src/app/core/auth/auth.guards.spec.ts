@@ -9,8 +9,9 @@ import {
   UrlTree,
   provideRouter,
 } from '@angular/router';
-import { CHAVE_SESSAO, Perfil } from './auth';
 import { autenticadoGuard, perfilGuard, visitanteGuard } from './auth.guards';
+import { CHAVE_SESSAO } from './repositorio-sessao';
+import { Perfil } from './sessao';
 
 function configurar(perfil?: Perfil) {
   if (perfil) {

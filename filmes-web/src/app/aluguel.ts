@@ -72,6 +72,8 @@ export class AluguelService {
   }
 
   validarAcesso(codigo: string): Observable<ValidacaoAcesso> {
-    return this.http.get<ValidacaoAcesso>(`${this.url}/acesso/${encodeURIComponent(codigo.trim())}`);
+    return this.http.get<ValidacaoAcesso>(
+      `${this.url}/acesso/${encodeURIComponent(codigo.trim())}`,
+    );
   }
 }

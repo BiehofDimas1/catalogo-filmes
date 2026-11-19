@@ -55,7 +55,10 @@ describe('Login', () => {
     fixture.componentInstance.entrar();
     http
       .expectOne(`${API_URL}/auth/login`)
-      .flush({ status: 401, detail: 'E-mail ou senha inválidos.' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { status: 401, detail: 'E-mail ou senha inválidos.' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     await fixture.whenStable();
 
     expect(fixture.nativeElement.textContent).toContain('E-mail ou senha inválidos.');

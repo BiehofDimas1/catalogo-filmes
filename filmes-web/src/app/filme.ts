@@ -9,16 +9,13 @@ export interface Filme {
   duracaoMinutos: number;
   licencasDisponiveis: number;
   ativo: boolean;
-  /** Muda a cada alteração do filme, inclusive quando um aluguel retira ou devolve uma licença. */
   versao: number;
 }
 
-/** Dados que o ADMIN envia ao cadastrar ou editar um filme. */
 export interface FilmeDados {
   titulo: string;
   duracaoMinutos: number;
   licencasDisponiveis: number;
-  /** Só na edição: a versão do filme carregada no formulário. A API recusa (409) se ele mudou desde então. */
   versao?: number;
 }
 
@@ -27,7 +24,6 @@ export class FilmeService {
   private http = inject(HttpClient);
   private url = `${API_URL}/filmes`;
 
-  /** O ADMIN recebe todos os filmes; o CLIENTE, só os ativos. */
   listar(): Observable<Filme[]> {
     return this.http.get<Filme[]>(this.url);
   }

@@ -1,0 +1,57 @@
+<h1>Catálogo de Filmes</h1>
+
+<p><a routerLink="/filmes/novo" class="botao">+ Novo filme</a></p>
+
+<app-aviso [mensagem]="mensagem" />
+
+@if (carregando()) {
+  <p>Carregando filmes...</p>
+} @else {
+  <div class="tabela">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Duração</th>
+          <th>Licenças disponíveis</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (filme of filmes(); track filme.id) {
+          <tr>
+            <td>{{ filme.titulo }}</td>
+            <td>{{ filme.duracaoMinutos }} min</td>
+            <td>{{ filme.licencasDisponiveis }}</td>
+            <td>{{ filme.ativo ? 'Ativo' : 'Inativo' }}</td>
+            <td class="acoes">
+              <a [routerLink]="['/filmes', filme.id, 'editar']">Editar</a>
+              @if (filme.ativo) {
+                <button
+                  type="button"
+                  (click)="inativar(filme)"
+                  [disabled]="emAndamento() === filme.id"
+                >
+                  Inativar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  (click)="reativar(filme)"
+                  [disabled]="emAndamento() === filme.id"
+                >
+                  Reativar
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5">Nenhum filme no catálogo.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

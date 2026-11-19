@@ -3,7 +3,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
-import { CHAVE_SESSAO, Perfil, Sessao } from './core/auth/auth';
+import { CHAVE_SESSAO } from './core/auth/repositorio-sessao';
+import { Perfil, Sessao } from './core/auth/sessao';
 
 function salvarSessao(perfil: Perfil) {
   const sessao: Sessao = {

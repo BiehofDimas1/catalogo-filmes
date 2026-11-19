@@ -12,7 +12,6 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 
-// Datas e valores no formato brasileiro (dd/MM/yyyy, R$ 9,90).
 registerLocaleData(localePt, 'pt-BR');
 
 export const appConfig: ApplicationConfig = {

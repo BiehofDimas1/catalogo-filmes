@@ -11,17 +11,24 @@ describe('mensagemDeErro', () => {
       },
     });
 
-    expect(mensagemDeErro(erro)).toBe('Verifique os campos informados. A duração máxima é 600 minutos.');
+    expect(mensagemDeErro(erro)).toBe(
+      'Verifique os campos informados. A duração máxima é 600 minutos.',
+    );
   });
 
   it('usa só o detail quando não há erros por campo', () => {
-    const erro = new HttpErrorResponse({ status: 422, error: { detail: 'Não há licenças disponíveis.' } });
+    const erro = new HttpErrorResponse({
+      status: 422,
+      error: { detail: 'Não há licenças disponíveis.' },
+    });
 
     expect(mensagemDeErro(erro)).toBe('Não há licenças disponíveis.');
   });
 
   it('avisa quando a API não responde', () => {
-    expect(mensagemDeErro(new HttpErrorResponse({ status: 0 }))).toContain('Não foi possível conectar à API');
+    expect(mensagemDeErro(new HttpErrorResponse({ status: 0 }))).toContain(
+      'Não foi possível conectar à API',
+    );
   });
 
   it('usa a mensagem padrão quando a resposta não tem detalhe', () => {

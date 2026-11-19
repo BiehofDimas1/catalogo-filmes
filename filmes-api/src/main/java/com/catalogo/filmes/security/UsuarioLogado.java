@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-/** Usuário autenticado na requisição atual, recarregado do banco a cada chamada. */
-public record UsuarioLogado(Long id, String nome, String email, String senha, Perfil perfil) implements UserDetails {
+public record UsuarioLogado(Long id, String nome, String email, String senha, Perfil perfil)
+        implements UserDetails {
 
     public static UsuarioLogado de(Usuario usuario) {
         return new UsuarioLogado(usuario.getId(), usuario.getNome(), usuario.getEmail(),
@@ -36,27 +36,6 @@ public record UsuarioLogado(Long id, String nome, String email, String senha, Pe
         return email;
     }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
-    /** Não inclui o hash da senha, para ele nunca aparecer em logs. */
     @Override
     public String toString() {
         return "UsuarioLogado[id=" + id + ", email=" + email + ", perfil=" + perfil + "]";

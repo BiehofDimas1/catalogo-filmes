@@ -1,0 +1,51 @@
+<h1>Catálogo de Filmes</h1>
+
+@if (regras(); as regrasAluguel) {
+  <p class="regras">
+    Aluguel por {{ regrasAluguel.valor | currency: 'BRL' }}, válido por
+    {{ regrasAluguel.duracaoHoras }} horas. Cancelamento com reembolso em até
+    {{ regrasAluguel.prazoCancelamentoMinutos }} minutos. Até {{ regrasAluguel.limiteAtivos }}
+    aluguéis ativos por vez.
+  </p>
+}
+
+<app-aviso [mensagem]="mensagem" />
+
+@if (carregando()) {
+  <p>Carregando filmes...</p>
+} @else {
+  <div class="tabela">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Duração</th>
+          <th>Licenças disponíveis</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (filme of filmes(); track filme.id) {
+          <tr>
+            <td>{{ filme.titulo }}</td>
+            <td>{{ filme.duracaoMinutos }} min</td>
+            <td>{{ filme.licencasDisponiveis }}</td>
+            <td>
+              <button
+                type="button"
+                (click)="alugar(filme)"
+                [disabled]="filme.licencasDisponiveis === 0 || emAndamento() === filme.id"
+              >
+                {{ filme.licencasDisponiveis === 0 ? 'Indisponível' : 'Alugar' }}
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4">Nenhum filme no catálogo.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

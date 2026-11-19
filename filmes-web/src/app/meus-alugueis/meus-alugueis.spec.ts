@@ -29,7 +29,13 @@ function aluguel(dados: Partial<Aluguel> = {}): Aluguel {
 }
 
 const cancelado = (id: number) =>
-  aluguel({ id, status: 'CANCELADO', cancelavel: false, transacaoReembolso: 'REE-SIM-1', codigoAcesso: 'codigo-antigo' });
+  aluguel({
+    id,
+    status: 'CANCELADO',
+    cancelavel: false,
+    transacaoReembolso: 'REE-SIM-1',
+    codigoAcesso: 'codigo-antigo',
+  });
 
 describe('MeusAlugueis', () => {
   let fixture: ComponentFixture<MeusAlugueis>;
@@ -56,13 +62,12 @@ describe('MeusAlugueis', () => {
   }
 
   function botaoCancelar(): HTMLButtonElement {
-    const botao = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Cancelar'),
-    );
-    if (!botao) {
+    const botoes = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
+    const encontrado = botoes.find((botao) => botao.textContent?.includes('Cancelar'));
+    if (!encontrado) {
       throw new Error('Botão Cancelar não encontrado');
     }
-    return botao;
+    return encontrado;
   }
 
   it('mostra o histórico, com o código só do aluguel ativo', async () => {
